@@ -8,6 +8,12 @@
     tools:context=".MainActivity"
     tools:showIn="@layout/activity_main">
 
+    <org.opencv.android.JavaCameraView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/openCVCameraView"
+        app:show_fps="true"/>
+
     <TextView
         android:id="@+id/sample_text"
         android:layout_width="wrap_content"
