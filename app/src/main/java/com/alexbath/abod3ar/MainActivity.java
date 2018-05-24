@@ -1,5 +1,6 @@
 package com.alexbath.abod3ar;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.SurfaceView;
 import android.widget.TextView;
@@ -12,16 +13,22 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.JavaCameraView;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.Socket;
+
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
     CameraBridgeViewBase cameraBridgeViewBase;
     Mat mat1,mat2,mat3;
+    BaseLoaderCallback baseLoaderCallback;
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -32,9 +39,27 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        new NetworkConnection().execute();
+
         cameraBridgeViewBase = (JavaCameraView) findViewById(R.id.openCVCameraView);
         cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         cameraBridgeViewBase.setCvCameraViewListener(this);
+
+        baseLoaderCallback = new BaseLoaderCallback(this) {
+            @Override
+            public void onManagerConnected(int status) {
+                switch (status){
+                    case BaseLoaderCallback.SUCCESS:
+                        cameraBridgeViewBase.enableView();
+                        break;
+                    default:
+                        super.onManagerConnected(status);
+                        break;
+                }
+                super.onManagerConnected(status);
+            }
+        };
 
 
         // Example of a call to a native method
@@ -127,5 +152,23 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             cameraBridgeViewBase.disableView();
         }
         super.onDestroy();
+    }
+
+    private class NetworkConnection extends AsyncTask<String,String,String>{
+
+        @Override
+        protected String doInBackground(String... strings) {
+
+            try {
+                Socket socket = new Socket("10.0.2.2", 3001);
+                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                while(true) {
+                    out.println(">>> Android Client: I want information!");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
     }
 }
