@@ -21,6 +21,7 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -128,15 +129,16 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        
-        mat1 = inputFrame.rgba();
 
+        mat1 = inputFrame.rgba();
+        Imgproc.cvtColor(mat1,mat2,Imgproc.COLOR_RGB2GRAY);
+        
         //rotate frame
         //Core.transpose(mat1,mat2);
         //Imgproc.resize(mat2,mat3,mat3.size(),0,0,Imgproc.INTER_LANCZOS4);
         //Core.flip(mat2,mat1,1);
 
-        return mat1;
+        return mat2;
     }
 
     @Override
