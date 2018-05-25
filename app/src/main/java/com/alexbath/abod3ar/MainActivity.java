@@ -2,21 +2,21 @@ package com.alexbath.abod3ar;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.SurfaceView;
-import android.widget.TextView;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.view.View;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SurfaceView;
+import android.view.WindowManager;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.JavaCameraView;
+import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
@@ -26,9 +26,10 @@ import java.net.Socket;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
-    CameraBridgeViewBase cameraBridgeViewBase;
-    Mat mat1,mat2,mat3;
-    BaseLoaderCallback baseLoaderCallback;
+    private static final String TAG = "OpenCVCamera";
+    private CameraBridgeViewBase cameraBridgeViewBase;
+    private Mat mat1,mat2,mat3;
+    private BaseLoaderCallback baseLoaderCallback;
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -40,7 +41,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        new NetworkConnection().execute();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        //new NetworkConnection().execute();
 
         cameraBridgeViewBase = (JavaCameraView) findViewById(R.id.openCVCameraView);
         cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
@@ -120,6 +123,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         mat1 = inputFrame.rgba();
 
+        //rotate frame
+        //Core.transpose(mat1,mat2);
+        //Imgproc.resize(mat2,mat3,mat3.size(),0,0,Imgproc.INTER_LANCZOS4);
+        //Core.flip(mat2,mat1,1);
+
         return mat1;
     }
 
@@ -137,9 +145,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     protected void onResume() {
 
         if(!OpenCVLoader.initDebug()){
+            Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, baseLoaderCallback);
             Toast.makeText(getApplicationContext(),"OpenCV problem!",Toast.LENGTH_LONG).show();
         }else{
-            baseLoaderCallback.onManagerConnected(BaseLoaderCallback.SUCCESS);
+            Log.d(TAG, "OpenCV library found inside package. Using it!");
+            baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
 
         super.onResume();
