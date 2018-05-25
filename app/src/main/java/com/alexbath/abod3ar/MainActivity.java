@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         if(!OpenCVLoader.initDebug()){
             Toast.makeText(getApplicationContext(),"OpenCV problem!",Toast.LENGTH_LONG).show();
         }else{
-
+            baseLoaderCallback.onManagerConnected(BaseLoaderCallback.SUCCESS);
         }
 
         super.onResume();
