@@ -70,7 +70,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
         robotIdx = 1;
-        new NetworkConnection().execute();
 
         cameraBridgeViewBase = (JavaCameraView) findViewById(R.id.openCVCameraView);
         cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
@@ -104,6 +103,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             statusTextView.setText("OpenCV Error!");
             Log.d(OPENCVTAG, "OpenCV Failed!");
         }
+    }
+
+    @Override
+    protected void onStart() {
+        //new NetworkConnection().execute();
+        
+        super.onStart();
     }
 
     @Override
@@ -232,31 +238,54 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         super.onDestroy();
     }
 
-    private class NetworkConnection extends AsyncTask<String,String,String>{
-
-        @Override
-        protected String doInBackground(String... strings) {
-
-            try {
-                statusTextView.append("Connecting to Server...\n");
-                Socket socket = new Socket("192.168.178.21", 3001);
-                statusTextView.append("Connected to Server...\n");
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                while(true) {
-                    try {
-                        Thread.sleep(150);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    out.println("Request for Robot: "+robotIdx);
-                    //System.out.println("server says:" + br.readLine());
-                    Log.d(SERVERTAG, br.readLine());
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-    }
+//    private class NetworkConnection extends AsyncTask<String,String,String>{
+//
+//        private String response = null;
+//
+//        @Override
+//        protected void onPreExecute() {
+//            serverTextView.append("aman");
+//            super.onPreExecute();
+//        }
+//
+//        @Override
+//        protected String doInBackground(String... strings) {
+//
+//           // try {
+//                //Socket socket = new Socket("192.168.178.21", 3001);
+//                //PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+//                //BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+//            boolean foo = true;
+//            while(foo){
+//
+//
+////                    try {
+////                        Thread.sleep(150);
+////                    } catch (InterruptedException e) {
+////                        e.printStackTrace();
+////                    }
+////                    out.println("Request for Robot: "+robotIdx);
+////                    //System.out.println("server says:" + br.readLine());
+////                    response = br.readLine();
+////                    Log.d(SERVERTAG, response);
+//                    this.publishProgress("aman");
+//                }
+////            } catch (IOException e) {
+////                e.printStackTrace();
+////            }
+//            return null;
+//        }
+//
+//        @Override
+//        protected void onProgressUpdate(String... values) {
+//            super.onProgressUpdate(values);
+//
+//
+//            TextView serverTextView2 = (TextView) findViewById(R.id.server_response);
+//            serverTextView2.append(values[0]);
+//            //Log.d(SERVERTAG, "onProgressUpdate" + response);
+//
+//
+//        }
+//    }
 }
