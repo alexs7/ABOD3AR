@@ -4,7 +4,6 @@ import android.content.pm.ActivityInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,38 +21,39 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
     private static final String OPENCVTAG = "OpenCVCamera";
+    private static final String SERVERTAG = "SERVER";
     private CameraBridgeViewBase cameraBridgeViewBase;
     private Mat frame,frameHSV,thresh,mat4;
     private BaseLoaderCallback baseLoaderCallback;
-    private TextView status;
+    private TextView statusTextView;
+    private TextView serverTextView;
     private Scalar lower;
     private Scalar upper;
     private Mat circles;
+    private int iCannyUpperThreshold;
+    private int iMinRadius;
+    private int iMaxRadius;
+    private int iAccumulator;
+    private boolean drawCirclesDetection;
 
     // Used to load the 'native-lib' library on application startup.
     static {
         System.loadLibrary("native-lib");
     }
-
-    private int iCannyUpperThreshold;
-    private int iMinRadius;
-    private int iMaxRadius;
-    private int iAccumulator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
-        //new NetworkConnection().execute();
+        new NetworkConnection().execute();
 
         cameraBridgeViewBase = (JavaCameraView) findViewById(R.id.openCVCameraView);
         cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
@@ -91,14 +91,15 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
 
         // Example of a call to a native method
-        status = (TextView) findViewById(R.id.sample_text);
+        statusTextView = (TextView) findViewById(R.id.status_text);
+        serverTextView = (TextView) findViewById(R.id.server_response);
         //tv.setText(stringFromJNI());
 
         if(OpenCVLoader.initDebug()){
-            status.setText("OpenCV Loaded!");
+            statusTextView.setText("OpenCV Loaded!");
             Log.d(OPENCVTAG, "OpenCV Loaded!");
         }else{
-            status.setText("OpenCV Error!");
+            statusTextView.setText("OpenCV Error!");
             Log.d(OPENCVTAG, "OpenCV Failed!");
         }
     }
@@ -141,10 +142,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         upper = new Scalar(64, 255, 255);
 
         iCannyUpperThreshold = 100;
-        iMinRadius = 30;
+        iMinRadius = 50;
         iMaxRadius = 100;
-        iAccumulator = 30;
+        iAccumulator = 60;
         circles = new Mat();
+
+        drawCirclesDetection = false;
     }
 
     @Override
@@ -163,137 +166,34 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Imgproc.cvtColor(frame,frameHSV,Imgproc.COLOR_BGR2HSV);
         Core.inRange(frameHSV,lower,upper,thresh);
 
-        //Imgproc.cvtColor(thresh,mat4,Imgproc.COLOR_HSV2BGR);
-
+        //returns single channel image!
         Imgproc.GaussianBlur( thresh, mat4, new Size(11, 11), 3, 3 );
-
-        //System.out.println(">>>>"+mat4.channels());
 
         Imgproc.HoughCircles(mat4, circles, Imgproc.CV_HOUGH_GRADIENT,2.0,
                 mat4.rows() / 8, iCannyUpperThreshold, iAccumulator, iMinRadius, iMaxRadius);
 
-        for (int x = 0; x < circles.cols(); x++){
+        for (int i = 0; i < circles.cols(); i++){
 
-            System.out.println("Found Circle ?"+circles.cols());
+            //circlesDetails[0]=x, 1=y, 2=radius
+            double circlesDetails[] = circles.get(0, i);
 
-            double vCircle[]=circles.get(0,x);
+            double circleX = Math.round(circlesDetails[0]);
+            double circleY = Math.round(circlesDetails[1]);
+            int radius = (int) Math.round(circlesDetails[2]);
 
-            Point center=new Point(Math.round(vCircle[0]), Math.round(vCircle[1]));
-            int radius = (int)Math.round(vCircle[2]);
-            // draw the circle center
-            Imgproc.circle(frame, center, 3,new Scalar(0,0,255), -1, 8, 0 );
-            // draw the circle outline
-            Imgproc.circle( frame, center, radius, new Scalar(0,0,255), 3, 8, 0 );
+            Point center = new Point(circleX,circleY);
 
+            if(drawCirclesDetection){
+                Imgproc.circle(frame, center,2, new Scalar(0,0,255), -1, 8, 0 );
+                Imgproc.circle( frame, center, radius, new Scalar(0,0,255), 3, 8, 0 );
+            }
+
+            serverTextView.setX((float) circleX);
+            serverTextView.setY((float) circleY);
         }
 
         return frame;
 
-//        Imgproc.HoughCircles(thresh, circles, Imgproc.CV_HOUGH_GRADIENT,2.0,
-//                thresh.rows() / 8, iCannyUpperThreshold, iAccumulator, iMinRadius, iMaxRadius);
-//
-//        for (int x = 0; x < circles.cols(); x++){
-//
-//            System.out.println(circles.cols());
-//
-//            double vCircle[]=circles.get(0,x);
-//
-//            Point center=new Point(Math.round(vCircle[0]), Math.round(vCircle[1]));
-//            int radius = (int)Math.round(vCircle[2]);
-//            // draw the circle center
-//            Imgproc.circle(frame, center, 3,new Scalar(0,0,255), -1, 8, 0 );
-//            // draw the circle outline
-//            Imgproc.circle( frame, center, radius, new Scalar(0,0,255), 3, 8, 0 );
-//
-//        }
-//
-//         Imgproc.circle (
-//                frame,                 //Matrix obj of the image
-//                new Point(230, 160),    //Center of the circle
-//                100,                    //Radius
-//                new Scalar(0, 255, 0),  //Scalar object for color
-//                10                      //Thickness of the circle
-//        );
-//
-//        return frame;
-
-        //mat1 = inputFrame.rgba();
-//
-//        mat4 = inputFrame.rgba();
-//
-//        Scalar lower = new Scalar(29, 86, 6);
-//        Scalar upper = new Scalar(64, 255, 255);
-//
-//        Imgproc.cvtColor(mat4,mat1,Imgproc.COLOR_BGR2HSV);
-//        Core.inRange(mat1,lower,upper,mat2);
-//
-//        Imgproc.dilate(mat1, mat3, new Mat(), new Point(-1, -1), 2);
-//        Imgproc.dilate(mat3, mat2, new Mat(), new Point(-1, -1), 2);
-//
-////        Mat hierarchy;
-////        List<MatOfPoint> contours = ;
-////        Imgproc.findContours ( mat2, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE );
-////
-//        List<MatOfPoint> contours = new ArrayList<>();
-//        Mat hierarchy = new Mat();
-//
-//        Imgproc.findContours(mat2, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
-//
-//        Imgproc.drawContours(mat3, contours, -1, new Scalar(200, 255, 255, 0), 3);
-
-        //Imgproc.cvtColor(mat3,mat4,Imgproc.COLOR_HSV2BGR);
-
-//        Imgproc.circle (
-//                mat2,                 //Matrix obj of the image
-//                new Point(230, 160),    //Center of the circle
-//                100,                    //Radius
-//                new Scalar(0, 255, 0),  //Scalar object for color
-//                10                      //Thickness of the circle
-//        );
-
-        //Imgproc.cvtColor(mat3,mat4,Imgproc.COLOR_HSV2RGB);
-
-//        if (hierarchy.size().height > 0 && hierarchy.size().width > 0)
-//        {
-//            // for each contour, display it in blue
-//            for (int idx = 0; idx >= 0; idx = (int) hierarchy.get(0, idx)[0])
-//            {
-//                Imgproc.drawContours(mat3, contours, idx, new Scalar(0, 255, 0));
-//            }
-//        }
-
-//        return mat2;
-
-        //Imgproc.blur(mat2, mat1, new Size(5, 5));
-        //Imgproc.GaussianBlur( mat2, mat1, new Size(9, 9), 2, 2 );
-        //Imgproc.Canny(mat1, mat3, 40, 40 * 3, 3, false);
-
-//        Imgproc.findContours(mat2,contours,hierarchy,Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);
-
-        // if any contour exist...
-//        if (hierarchy.size().height > 0 && hierarchy.size().width > 0)
-//        {
-//            // for each contour, display it in blue
-//            for (int idx = 0; idx >= 0; idx = (int) hierarchy.get(0, idx)[0])
-//            {
-//                Imgproc.drawContours(mat3, contours, idx, new Scalar(250, 0, 0));
-//            }
-//        }
-
-//        Imgproc.HoughCircles(mat1,circles,Imgproc.CV_HOUGH_GRADIENT, 2, mat3.rows()/4, 120, 10, 10, 18);
-//
-//        if(circles.cols() > 0){
-//            status.append("Found: "+circles.cols()+" circles");
-//        }
-
-        //reset circles ?
-
-        //rotate frame
-        //Core.transpose(mat1,mat2);
-        //Imgproc.resize(mat2,mat3,mat3.size(),0,0,Imgproc.INTER_LANCZOS4);
-        //Core.flip(mat2,mat1,1);
-
-//        return thresh;
     }
 
     @Override
@@ -336,10 +236,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         protected String doInBackground(String... strings) {
 
             try {
-                Socket socket = new Socket("10.0.2.2", 3001);
+                Socket socket = new Socket("192.168.178.21", 3001);
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 while(true) {
                     out.println(">>> Android Client: I want information!");
+                    //System.out.println("server says:" + br.readLine());
+                    Log.d(SERVERTAG, br.readLine());
                 }
             } catch (IOException e) {
                 e.printStackTrace();
