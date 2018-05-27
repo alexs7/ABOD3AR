@@ -4,6 +4,7 @@ import android.content.pm.ActivityInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,18 +22,26 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
-    private static final String TAG = "OpenCVCamera";
+    private static final String OPENCVTAG = "OpenCVCamera";
     private CameraBridgeViewBase cameraBridgeViewBase;
-    private Mat mat1,mat2,mat3;
+    private Mat mat1,mat2,mat3,mat4;
     private BaseLoaderCallback baseLoaderCallback;
+    private TextView status;
+    private Mat circles;
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -50,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         View decorView = getWindow().getDecorView();
-        decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
         //new NetworkConnection().execute();
 
@@ -75,13 +84,15 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
 
         // Example of a call to a native method
-        TextView tv = (TextView) findViewById(R.id.sample_text);
-        tv.setText(stringFromJNI());
+        status = (TextView) findViewById(R.id.sample_text);
+        //tv.setText(stringFromJNI());
 
         if(OpenCVLoader.initDebug()){
-            Toast.makeText(getApplicationContext(),"OpenCV success",Toast.LENGTH_LONG).show();
+            status.setText("OpenCV Loaded!");
+            Log.d(OPENCVTAG, "OpenCV Loaded!");
         }else{
-            Toast.makeText(getApplicationContext(),"OpenCV failed",Toast.LENGTH_LONG).show();
+            status.setText("OpenCV Error!");
+            Log.d(OPENCVTAG, "OpenCV Failed!");
         }
     }
 
@@ -118,6 +129,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         mat1 = new Mat(width,height, CvType.CV_8UC4);
         mat2 = new Mat(width,height, CvType.CV_8UC4);
         mat3 = new Mat(width,height, CvType.CV_8UC4);
+        mat4 = new Mat(width,height, CvType.CV_8UC4);
     }
 
     @Override
@@ -125,20 +137,91 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         mat1.release();
         mat2.release();
         mat3.release();
+        mat4.release();
     }
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
 
         mat1 = inputFrame.rgba();
-        Imgproc.cvtColor(mat1,mat2,Imgproc.COLOR_RGB2GRAY);
-        
+
+        Scalar lower = new Scalar(29, 86, 6);
+        Scalar upper = new Scalar(64, 255, 255);
+
+        Imgproc.cvtColor(mat1,mat2,Imgproc.COLOR_BGR2HSV);
+        Core.inRange(mat2,lower,upper,mat1);
+
+        Imgproc.dilate(mat1, mat3, new Mat(), new Point(-1, -1), 2);
+        Imgproc.dilate(mat3, mat2, new Mat(), new Point(-1, -1), 2);
+
+//        Mat hierarchy;
+//        List<MatOfPoint> contours = ;
+//        Imgproc.findContours ( mat2, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE );
+//
+        List<MatOfPoint> contours = new ArrayList<>();
+        Mat hierarchy = new Mat();
+
+        Imgproc.findContours(mat2, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+
+        System.out.println(contours.size());
+
+        Imgproc.drawContours(mat3, contours, -1, new Scalar(0, 100, 100, 0), 3);
+
+        System.out.println(contours.get(0).size());
+
+        //Imgproc.cvtColor(mat3,mat4,Imgproc.COLOR_HSV2BGR);
+
+        Imgproc.circle (
+                mat3,                 //Matrix obj of the image
+                new Point(230, 160),    //Center of the circle
+                100,                    //Radius
+                new Scalar(0, 100, 100, 0),  //Scalar object for color
+                10                      //Thickness of the circle
+        );
+
+        //Imgproc.cvtColor(mat3,mat4,Imgproc.COLOR_HSV2RGB);
+
+//        if (hierarchy.size().height > 0 && hierarchy.size().width > 0)
+//        {
+//            // for each contour, display it in blue
+//            for (int idx = 0; idx >= 0; idx = (int) hierarchy.get(0, idx)[0])
+//            {
+//                Imgproc.drawContours(mat3, contours, idx, new Scalar(0, 255, 0));
+//            }
+//        }
+
+        return mat3;
+
+        //Imgproc.blur(mat2, mat1, new Size(5, 5));
+        //Imgproc.GaussianBlur( mat2, mat1, new Size(9, 9), 2, 2 );
+        //Imgproc.Canny(mat1, mat3, 40, 40 * 3, 3, false);
+
+//        Imgproc.findContours(mat2,contours,hierarchy,Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);
+
+        // if any contour exist...
+//        if (hierarchy.size().height > 0 && hierarchy.size().width > 0)
+//        {
+//            // for each contour, display it in blue
+//            for (int idx = 0; idx >= 0; idx = (int) hierarchy.get(0, idx)[0])
+//            {
+//                Imgproc.drawContours(mat3, contours, idx, new Scalar(250, 0, 0));
+//            }
+//        }
+
+//        Imgproc.HoughCircles(mat1,circles,Imgproc.CV_HOUGH_GRADIENT, 2, mat3.rows()/4, 120, 10, 10, 18);
+//
+//        if(circles.cols() > 0){
+//            status.append("Found: "+circles.cols()+" circles");
+//        }
+
+        //reset circles ?
+
         //rotate frame
         //Core.transpose(mat1,mat2);
         //Imgproc.resize(mat2,mat3,mat3.size(),0,0,Imgproc.INTER_LANCZOS4);
         //Core.flip(mat2,mat1,1);
 
-        return mat2;
+//        return mat2;
     }
 
     @Override
@@ -155,11 +238,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     protected void onResume() {
 
         if(!OpenCVLoader.initDebug()){
-            Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
+            Log.d(OPENCVTAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, baseLoaderCallback);
             Toast.makeText(getApplicationContext(),"OpenCV problem!",Toast.LENGTH_LONG).show();
         }else{
-            Log.d(TAG, "OpenCV library found inside package. Using it!");
+            Log.d(OPENCVTAG, "OpenCV library found inside package. Using it!");
             baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
 
