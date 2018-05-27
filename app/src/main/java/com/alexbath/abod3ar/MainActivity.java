@@ -38,15 +38,22 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     private static final String OPENCVTAG = "OpenCVCamera";
     private CameraBridgeViewBase cameraBridgeViewBase;
-    private Mat mat1,mat2,mat3,mat4;
+    private Mat frame,frameHSV,thresh,mat4;
     private BaseLoaderCallback baseLoaderCallback;
     private TextView status;
+    private Scalar lower;
+    private Scalar upper;
     private Mat circles;
 
     // Used to load the 'native-lib' library on application startup.
     static {
         System.loadLibrary("native-lib");
     }
+
+    private int iCannyUpperThreshold;
+    private int iMinRadius;
+    private int iMaxRadius;
+    private int iAccumulator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,58 +133,123 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     @Override
     public void onCameraViewStarted(int width, int height) {
-        mat1 = new Mat(width,height, CvType.CV_8UC4);
-        mat2 = new Mat(width,height, CvType.CV_8UC4);
-        mat3 = new Mat(width,height, CvType.CV_8UC4);
+        frame = new Mat(width,height, CvType.CV_8UC4);
+        frameHSV = new Mat(width,height, CvType.CV_8UC4);
+        thresh = new Mat(width,height, CvType.CV_8UC4);
         mat4 = new Mat(width,height, CvType.CV_8UC4);
+        lower = new Scalar(29, 86, 6);
+        upper = new Scalar(64, 255, 255);
+
+        iCannyUpperThreshold = 100;
+        iMinRadius = 30;
+        iMaxRadius = 100;
+        iAccumulator = 30;
+        circles = new Mat();
     }
 
     @Override
     public void onCameraViewStopped() {
-        mat1.release();
-        mat2.release();
-        mat3.release();
+        frame.release();
+        frameHSV.release();
+        thresh.release();
         mat4.release();
     }
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
 
-        mat1 = inputFrame.rgba();
+        frame = inputFrame.rgba();
 
-        Scalar lower = new Scalar(29, 86, 6);
-        Scalar upper = new Scalar(64, 255, 255);
+        Imgproc.cvtColor(frame,frameHSV,Imgproc.COLOR_BGR2HSV);
+        Core.inRange(frameHSV,lower,upper,thresh);
 
-        Imgproc.cvtColor(mat1,mat2,Imgproc.COLOR_BGR2HSV);
-        Core.inRange(mat2,lower,upper,mat1);
+        //Imgproc.cvtColor(thresh,mat4,Imgproc.COLOR_HSV2BGR);
 
-        Imgproc.dilate(mat1, mat3, new Mat(), new Point(-1, -1), 2);
-        Imgproc.dilate(mat3, mat2, new Mat(), new Point(-1, -1), 2);
+        Imgproc.GaussianBlur( thresh, mat4, new Size(11, 11), 3, 3 );
 
-//        Mat hierarchy;
-//        List<MatOfPoint> contours = ;
-//        Imgproc.findContours ( mat2, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE );
+        //System.out.println(">>>>"+mat4.channels());
+
+        Imgproc.HoughCircles(mat4, circles, Imgproc.CV_HOUGH_GRADIENT,2.0,
+                mat4.rows() / 8, iCannyUpperThreshold, iAccumulator, iMinRadius, iMaxRadius);
+
+        for (int x = 0; x < circles.cols(); x++){
+
+            System.out.println("Found Circle ?"+circles.cols());
+
+            double vCircle[]=circles.get(0,x);
+
+            Point center=new Point(Math.round(vCircle[0]), Math.round(vCircle[1]));
+            int radius = (int)Math.round(vCircle[2]);
+            // draw the circle center
+            Imgproc.circle(frame, center, 3,new Scalar(0,0,255), -1, 8, 0 );
+            // draw the circle outline
+            Imgproc.circle( frame, center, radius, new Scalar(0,0,255), 3, 8, 0 );
+
+        }
+
+        return frame;
+
+//        Imgproc.HoughCircles(thresh, circles, Imgproc.CV_HOUGH_GRADIENT,2.0,
+//                thresh.rows() / 8, iCannyUpperThreshold, iAccumulator, iMinRadius, iMaxRadius);
 //
-        List<MatOfPoint> contours = new ArrayList<>();
-        Mat hierarchy = new Mat();
+//        for (int x = 0; x < circles.cols(); x++){
+//
+//            System.out.println(circles.cols());
+//
+//            double vCircle[]=circles.get(0,x);
+//
+//            Point center=new Point(Math.round(vCircle[0]), Math.round(vCircle[1]));
+//            int radius = (int)Math.round(vCircle[2]);
+//            // draw the circle center
+//            Imgproc.circle(frame, center, 3,new Scalar(0,0,255), -1, 8, 0 );
+//            // draw the circle outline
+//            Imgproc.circle( frame, center, radius, new Scalar(0,0,255), 3, 8, 0 );
+//
+//        }
+//
+//         Imgproc.circle (
+//                frame,                 //Matrix obj of the image
+//                new Point(230, 160),    //Center of the circle
+//                100,                    //Radius
+//                new Scalar(0, 255, 0),  //Scalar object for color
+//                10                      //Thickness of the circle
+//        );
+//
+//        return frame;
 
-        Imgproc.findContours(mat2, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
-
-        System.out.println(contours.size());
-
-        Imgproc.drawContours(mat3, contours, -1, new Scalar(0, 100, 100, 0), 3);
-
-        System.out.println(contours.get(0).size());
+        //mat1 = inputFrame.rgba();
+//
+//        mat4 = inputFrame.rgba();
+//
+//        Scalar lower = new Scalar(29, 86, 6);
+//        Scalar upper = new Scalar(64, 255, 255);
+//
+//        Imgproc.cvtColor(mat4,mat1,Imgproc.COLOR_BGR2HSV);
+//        Core.inRange(mat1,lower,upper,mat2);
+//
+//        Imgproc.dilate(mat1, mat3, new Mat(), new Point(-1, -1), 2);
+//        Imgproc.dilate(mat3, mat2, new Mat(), new Point(-1, -1), 2);
+//
+////        Mat hierarchy;
+////        List<MatOfPoint> contours = ;
+////        Imgproc.findContours ( mat2, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE );
+////
+//        List<MatOfPoint> contours = new ArrayList<>();
+//        Mat hierarchy = new Mat();
+//
+//        Imgproc.findContours(mat2, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+//
+//        Imgproc.drawContours(mat3, contours, -1, new Scalar(200, 255, 255, 0), 3);
 
         //Imgproc.cvtColor(mat3,mat4,Imgproc.COLOR_HSV2BGR);
 
-        Imgproc.circle (
-                mat3,                 //Matrix obj of the image
-                new Point(230, 160),    //Center of the circle
-                100,                    //Radius
-                new Scalar(0, 100, 100, 0),  //Scalar object for color
-                10                      //Thickness of the circle
-        );
+//        Imgproc.circle (
+//                mat2,                 //Matrix obj of the image
+//                new Point(230, 160),    //Center of the circle
+//                100,                    //Radius
+//                new Scalar(0, 255, 0),  //Scalar object for color
+//                10                      //Thickness of the circle
+//        );
 
         //Imgproc.cvtColor(mat3,mat4,Imgproc.COLOR_HSV2RGB);
 
@@ -190,7 +262,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 //            }
 //        }
 
-        return mat3;
+//        return mat2;
 
         //Imgproc.blur(mat2, mat1, new Size(5, 5));
         //Imgproc.GaussianBlur( mat2, mat1, new Size(9, 9), 2, 2 );
@@ -221,7 +293,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         //Imgproc.resize(mat2,mat3,mat3.size(),0,0,Imgproc.INTER_LANCZOS4);
         //Core.flip(mat2,mat1,1);
 
-//        return mat2;
+//        return thresh;
     }
 
     @Override
