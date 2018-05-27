@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private int iMaxRadius;
     private int iAccumulator;
     private boolean drawCirclesDetection;
+    private int robotIdx = 0;
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -68,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
+        robotIdx = 1;
         new NetworkConnection().execute();
 
         cameraBridgeViewBase = (JavaCameraView) findViewById(R.id.openCVCameraView);
@@ -236,11 +238,18 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         protected String doInBackground(String... strings) {
 
             try {
+                statusTextView.append("Connecting to Server...\n");
                 Socket socket = new Socket("192.168.178.21", 3001);
+                statusTextView.append("Connected to Server...\n");
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 while(true) {
-                    out.println(">>> Android Client: I want information!");
+                    try {
+                        Thread.sleep(150);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    out.println("Request for Robot: "+robotIdx);
                     //System.out.println("server says:" + br.readLine());
                     Log.d(SERVERTAG, br.readLine());
                 }
