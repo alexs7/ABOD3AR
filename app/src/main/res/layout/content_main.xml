@@ -39,6 +39,8 @@
         android:text="Server Text!"
         android:textAlignment="center"
         android:textColor="@android:color/holo_green_light"
+        android:textSize="10sp"
+        android:gravity="bottom"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.038"

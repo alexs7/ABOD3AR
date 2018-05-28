@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -57,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private int robotIdx = 0;
     private Thread networkEnquirerThread;
     private Handler networkEnquirerResponseHandler;
+    private Button connectToServerbutton;
     private static final int START_NETWORK_THREAD = 0;
     private static final int SERVER_POLLING = 1;
 
@@ -80,6 +82,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         statusTextView = (TextView) findViewById(R.id.status_text);
         serverTextView = (TextView) findViewById(R.id.server_response);
+        serverTextView.setMovementMethod(new ScrollingMovementMethod());
+        connectToServerbutton = findViewById(R.id.connect_server_button);
 
         robotIdx = 1;
 
@@ -100,7 +104,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                     while(true){
                         try {
-                            Thread.sleep(1000);
+                            Thread.sleep(150);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -118,8 +122,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             }
         });
 
-        final Button button = findViewById(R.id.connect_server_button);
-        button.setOnClickListener(new View.OnClickListener() {
+        connectToServerbutton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 networkEnquirerResponseHandler.sendEmptyMessage(START_NETWORK_THREAD);
             }
@@ -227,6 +230,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         for (int i = 0; i < circles.cols(); i++){
 
+            
+
             //circlesDetails[0]=x, 1=y, 2=radius
             double circlesDetails[] = circles.get(0, i);
 
@@ -256,7 +261,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             cameraBridgeViewBase.disableView();
         }
         super.onPause();
-
     }
 
     @Override
@@ -265,23 +269,16 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         networkEnquirerResponseHandler = new Handler(Looper.getMainLooper()){
             @Override
             public void handleMessage(Message msg){
-                super.handleMessage(msg);
-
-                if(msg.what == 0){
-                    networkEnquirerThread.start();
-                }else{
-                    serverTextView.append((String) msg.obj);
+                switch (msg.what){
+                    case 0:
+                        networkEnquirerThread.start();
+                    break;
+                    case 1:
+                        serverTextView.append("\n"+msg.obj);
+                        break;
+                    default:
+                        super.handleMessage(msg);
                 }
-//                switch (msg.what){
-//                    case 0:
-//
-//                    break;
-//                    case 1:
-//
-//                        break;
-//                    default:
-//
-//                }
             }
         };
 
@@ -306,54 +303,4 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         super.onDestroy();
     }
 
-//    private class NetworkConnection extends AsyncTask<String,String,String>{
-//
-//        private String response = null;
-//
-//        @Override
-//        protected void onPreExecute() {
-//            serverTextView.append("aman");
-//            super.onPreExecute();
-//        }
-//
-//        @Override
-//        protected String doInBackground(String... strings) {
-//
-//           // try {
-//                //Socket socket = new Socket("192.168.178.21", 3001);
-//                //PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-//                //BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-//            boolean foo = true;
-//            while(foo){
-//
-//
-////                    try {
-////                        Thread.sleep(150);
-////                    } catch (InterruptedException e) {
-////                        e.printStackTrace();
-////                    }
-////                    out.println("Request for Robot: "+robotIdx);
-////                    //System.out.println("server says:" + br.readLine());
-////                    response = br.readLine();
-////                    Log.d(SERVERTAG, response);
-//                    this.publishProgress("aman");
-//                }
-////            } catch (IOException e) {
-////                e.printStackTrace();
-////            }
-//            return null;
-//        }
-//
-//        @Override
-//        protected void onProgressUpdate(String... values) {
-//            super.onProgressUpdate(values);
-//
-//
-//            TextView serverTextView2 = (TextView) findViewById(R.id.server_response);
-//            serverTextView2.append(values[0]);
-//            //Log.d(SERVERTAG, "onProgressUpdate" + response);
-//
-//
-//        }
-//    }
 }
