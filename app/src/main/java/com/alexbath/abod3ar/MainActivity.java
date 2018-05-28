@@ -3,6 +3,9 @@ package com.alexbath.abod3ar;
 import android.content.pm.ActivityInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -10,6 +13,7 @@ import android.view.MenuItem;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,6 +33,7 @@ import org.opencv.imgproc.Imgproc;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 
@@ -50,6 +55,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private int iAccumulator;
     private boolean drawCirclesDetection;
     private int robotIdx = 0;
+    private Thread networkEnquirerThread;
+    private Handler networkEnquirerResponseHandler;
+    private static final int START_NETWORK_THREAD = 0;
+    private static final int SERVER_POLLING = 1;
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -69,7 +78,52 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
+        statusTextView = (TextView) findViewById(R.id.status_text);
+        serverTextView = (TextView) findViewById(R.id.server_response);
+
         robotIdx = 1;
+
+        networkEnquirerThread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+
+                Socket socket = null;
+                PrintWriter out = null;
+                BufferedReader br = null;
+                String response = null;
+
+                try {
+                    socket = new Socket("192.168.178.21", 3001);
+                    out = new PrintWriter(socket.getOutputStream(), true);
+                    br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+                    while(true){
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        out.println("Request for Robot: "+robotIdx);
+                        response = br.readLine();
+                        Message message = new Message();
+                        message.what = SERVER_POLLING;
+                        message.obj = response;
+                        networkEnquirerResponseHandler.sendMessage(message);
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        final Button button = findViewById(R.id.connect_server_button);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                networkEnquirerResponseHandler.sendEmptyMessage(START_NETWORK_THREAD);
+            }
+        });
 
         cameraBridgeViewBase = (JavaCameraView) findViewById(R.id.openCVCameraView);
         cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
@@ -92,8 +146,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
 
         // Example of a call to a native method
-        statusTextView = (TextView) findViewById(R.id.status_text);
-        serverTextView = (TextView) findViewById(R.id.server_response);
         //tv.setText(stringFromJNI());
 
         if(OpenCVLoader.initDebug()){
@@ -103,13 +155,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             statusTextView.setText("OpenCV Error!");
             Log.d(OPENCVTAG, "OpenCV Failed!");
         }
-    }
-
-    @Override
-    protected void onStart() {
-        //new NetworkConnection().execute();
-        
-        super.onStart();
     }
 
     @Override
@@ -216,6 +261,29 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     @Override
     protected void onResume() {
+
+        networkEnquirerResponseHandler = new Handler(Looper.getMainLooper()){
+            @Override
+            public void handleMessage(Message msg){
+                super.handleMessage(msg);
+
+                if(msg.what == 0){
+                    networkEnquirerThread.start();
+                }else{
+                    serverTextView.append((String) msg.obj);
+                }
+//                switch (msg.what){
+//                    case 0:
+//
+//                    break;
+//                    case 1:
+//
+//                        break;
+//                    default:
+//
+//                }
+            }
+        };
 
         if(!OpenCVLoader.initDebug()){
             Log.d(OPENCVTAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
