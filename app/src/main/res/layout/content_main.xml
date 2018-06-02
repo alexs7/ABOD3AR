@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/openCVCameraView"
-        app:show_fps="false"/>
+        app:show_fps="true"/>
 
     <TextView
         android:id="@+id/status_text"
@@ -69,11 +69,5 @@
         android:text="Load Plan"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
-    <de.blox.treeview.TreeView
-        android:id="@+id/treeview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-    </de.blox.treeview.TreeView>
 
 </android.support.constraint.ConstraintLayout>

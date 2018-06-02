@@ -1,12 +1,10 @@
 package com.alexbath.abod3ar;
 
 import android.content.pm.ActivityInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -35,21 +33,11 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
-
-import de.blox.treeview.BaseTreeAdapter;
-import de.blox.treeview.TreeNode;
-import de.blox.treeview.TreeView;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
@@ -100,38 +88,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         serverTextView.setMovementMethod(new ScrollingMovementMethod());
         connectToServerbutton = findViewById(R.id.connect_server_button);
         loadPlanButton  = findViewById(R.id.load_plan_button);
-        TreeView treeView = findViewById(R.id.treeview);
 
-        BaseTreeAdapter adapter = new BaseTreeAdapter<ViewHolder>(this, R.layout.node) {
-            @NonNull
-            @Override
-            public ViewHolder onCreateViewHolder(View view) {
-                return new ViewHolder(view);
-            }
-
-            @Override
-            public void onBindViewHolder(ViewHolder viewHolder, Object data, int position) {
-                viewHolder.getmTextView().setText(data.toString());
-            }
-        };
-        treeView.setAdapter(adapter);
-
-        TreeNode rootNode = new TreeNode("Root");
-        TreeNode child1 = new TreeNode("Child 1");
-        TreeNode child2 = new TreeNode("Child 2");
-        TreeNode child3 = new TreeNode("Child 3");
-        TreeNode child4 = new TreeNode("Child 4");
-        TreeNode child5 = new TreeNode("Child 5");
-        TreeNode child6 = new TreeNode("Child 6");
-
-        rootNode.addChild(child1);
-        rootNode.addChild(child2);
-        rootNode.addChild(child3);
-        rootNode.addChild(child4);
-        rootNode.addChild(child5);
-        rootNode.addChild(child6);
-
-        adapter.setRootNode(rootNode);
 
         networkEnquirerThread = new Thread(new Runnable() {
 
@@ -178,6 +135,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             public void onClick(View v) {
                 String fileName = "plans/Plan4.inst";
                 List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
+
+
             }
         });
 
@@ -281,7 +240,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Imgproc.HoughCircles(mat4, circles, Imgproc.CV_HOUGH_GRADIENT,2.0,
                 mat4.rows() / 8, iCannyUpperThreshold, iAccumulator, iMinRadius, iMaxRadius);
 
-        for (int i = 0; i < circles.cols(); i++){
+        for (int i = 0; i < circles.cols(); i++){ // TODO: maybe replace this ?? I have 1 circle I dont need a loop !
 
             //circlesDetails[0]=x, 1=y, 2=radius
             double circlesDetails[] = circles.get(0, i);
@@ -299,6 +258,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
             serverTextView.setX((float) circleX);
             serverTextView.setY((float) circleY);
+
+            Imgproc.line(frame, center, new Point(0,0), new Scalar(0,128,255),6);
         }
 
         return frame;
