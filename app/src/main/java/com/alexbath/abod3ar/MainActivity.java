@@ -18,6 +18,8 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
+
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.JavaCameraView;
@@ -42,6 +44,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
@@ -138,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         loadPlanButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 String fileName = "plans/Plan4.inst";
-                PlanLoader.loadPlanFile(fileName,getApplicationContext());
+                List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
             }
         });
 
