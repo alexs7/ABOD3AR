@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -45,6 +46,10 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
+
+import de.blox.treeview.BaseTreeAdapter;
+import de.blox.treeview.TreeNode;
+import de.blox.treeview.TreeView;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
@@ -89,13 +94,44 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
+        robotIdx = 1;
         statusTextView = (TextView) findViewById(R.id.status_text);
         serverTextView = (TextView) findViewById(R.id.server_response);
         serverTextView.setMovementMethod(new ScrollingMovementMethod());
         connectToServerbutton = findViewById(R.id.connect_server_button);
         loadPlanButton  = findViewById(R.id.load_plan_button);
+        TreeView treeView = findViewById(R.id.treeview);
 
-        robotIdx = 1;
+        BaseTreeAdapter adapter = new BaseTreeAdapter<ViewHolder>(this, R.layout.node) {
+            @NonNull
+            @Override
+            public ViewHolder onCreateViewHolder(View view) {
+                return new ViewHolder(view);
+            }
+
+            @Override
+            public void onBindViewHolder(ViewHolder viewHolder, Object data, int position) {
+                viewHolder.getmTextView().setText(data.toString());
+            }
+        };
+        treeView.setAdapter(adapter);
+
+        TreeNode rootNode = new TreeNode("Root");
+        TreeNode child1 = new TreeNode("Child 1");
+        TreeNode child2 = new TreeNode("Child 2");
+        TreeNode child3 = new TreeNode("Child 3");
+        TreeNode child4 = new TreeNode("Child 4");
+        TreeNode child5 = new TreeNode("Child 5");
+        TreeNode child6 = new TreeNode("Child 6");
+
+        rootNode.addChild(child1);
+        rootNode.addChild(child2);
+        rootNode.addChild(child3);
+        rootNode.addChild(child4);
+        rootNode.addChild(child5);
+        rootNode.addChild(child6);
+
+        adapter.setRootNode(rootNode);
 
         networkEnquirerThread = new Thread(new Runnable() {
 
