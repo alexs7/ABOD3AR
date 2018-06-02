@@ -32,7 +32,12 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -59,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private Thread networkEnquirerThread;
     private Handler networkEnquirerResponseHandler;
     private Button connectToServerbutton;
+    private Button loadPlanButton;
     private static final int START_NETWORK_THREAD = 0;
     private static final int SERVER_POLLING = 1;
 
@@ -84,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         serverTextView = (TextView) findViewById(R.id.server_response);
         serverTextView.setMovementMethod(new ScrollingMovementMethod());
         connectToServerbutton = findViewById(R.id.connect_server_button);
+        loadPlanButton  = findViewById(R.id.load_plan_button);
 
         robotIdx = 1;
 
@@ -125,6 +132,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         connectToServerbutton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 networkEnquirerResponseHandler.sendEmptyMessage(START_NETWORK_THREAD);
+            }
+        });
+
+        loadPlanButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                String fileName = "plans/Plan4.inst";
+                PlanLoader.loadPlanFile(fileName,getApplicationContext());
             }
         });
 
@@ -230,8 +244,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         for (int i = 0; i < circles.cols(); i++){
 
-            
-
             //circlesDetails[0]=x, 1=y, 2=radius
             double circlesDetails[] = circles.get(0, i);
 
@@ -251,7 +263,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }
 
         return frame;
-
     }
 
     @Override

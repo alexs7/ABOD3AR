@@ -54,9 +54,19 @@
         android:id="@+id/connect_server_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="196dp"
-        android:layout_marginStart="20dp"
+        android:layout_marginBottom="188dp"
+        android:layout_marginStart="16dp"
         android:text="Connect to Server"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/load_plan_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="140dp"
+        android:layout_marginStart="16dp"
+        android:text="Load Plan"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 

@@ -1,5 +1,7 @@
 package com.recklesscoding.abode.core.plan.reader.inst;
 
+import android.content.Context;
+
 import com.recklesscoding.abode.core.plan.Plan;
 //import com.recklesscoding.abode.core.plan.planelements.ElementWithTrigger;
 //import com.recklesscoding.abode.core.plan.planelements.PlanElement;
@@ -14,6 +16,8 @@ import com.recklesscoding.abode.core.plan.reader.inst.builders.InstPlanReaderHel
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.List;
 
 /**
@@ -22,12 +26,26 @@ import java.util.List;
  */
 public class InstPlanReader extends PlanReader {
 
+    private final Context applicationContext;
+
+    public InstPlanReader(Context applicationContext) {
+        this.applicationContext = applicationContext;
+    }
+
     @Override
     public void readFile(String fileName) {
         readInstFile(fileName);
     }
 
     private void readInstFile(String fileName) {
+
+        InputStream is = null;
+        try {
+            is = applicationContext.getAssets().open(fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         //All of them are local parameter, we don't need them in the memory after their job is done.
         InstPlanReaderHelper helper = new InstPlanReaderHelper();
 
@@ -38,7 +56,7 @@ public class InstPlanReader extends PlanReader {
         BufferedReader file;
         while (runCounter < 5) {
             try {
-                file = new BufferedReader(new FileReader(fileName));
+                file = new BufferedReader(new InputStreamReader(is));
 
                 while ((currentLine = file.readLine()) != null) {
                     currentLine = removeSpacesTabs(currentLine);
