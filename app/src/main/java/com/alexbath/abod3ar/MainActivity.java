@@ -236,9 +236,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         upper = new Scalar(64, 255, 255);
 
         iCannyUpperThreshold = 100;
-        iMinRadius = 60;
-        iMaxRadius = 100;
-        iAccumulator = 90;
+        iMinRadius = 10;
+        iMaxRadius = 120;
+        iAccumulator = 60;
         circles = new Mat();
 
         drawCirclesDetection = true;
@@ -296,8 +296,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 ElList.get(0).getTxtv().setY((float) (circleY - ElList.get(0).getTxtv().getHeight()/2));
 
                 for(int k = 1; k<ElList.size(); k++){
-                    float xV = (float) (circleX + radius*3*Math.cos(Math.PI/4*k));
-                    float yV = (float) (circleY + radius*3*Math.sin(Math.PI/4*k));
+                    float xV = (float) (circleX + radius*6*Math.cos(Math.PI/4*k));
+                    float yV = (float) (circleY + radius*6*Math.sin(Math.PI/4*k));
 
                     //float xVd = (float) (circleX + radius*Math.cos(45*k));
                     //float yVd = (float) (circleY + radius*Math.sin(45*k));
