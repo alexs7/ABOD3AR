@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private static final String OPENCVTAG = "OpenCVCamera";
     private static final String SERVERTAG = "SERVER";
     private CameraBridgeViewBase cameraBridgeViewBase;
-    private Mat frame,frameHSV,thresh,mat4;
+    private Mat frame,frameHSV,thresh,mat4,mat5,blurred;
     private BaseLoaderCallback baseLoaderCallback;
     private TextView statusTextView;
     private TextView serverTextView;
@@ -69,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private static final int SERVER_POLLING = 1;
     private boolean driveCollectionsAdded = false;
     private Point center;
+    Mat element = null;
     private ArrayList<TVElement> ElList;
 
     // Used to load the 'native-lib' library on application startup.
@@ -190,6 +191,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             statusTextView.setText("OpenCV Error!");
             Log.d(OPENCVTAG, "OpenCV Failed!");
         }
+
+        element = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(2 * 7 + 1, 2 * 7 + 1),
+                new Point(7, 7));
     }
 
     @Override
@@ -226,16 +230,18 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         frameHSV = new Mat(width,height, CvType.CV_8UC4);
         thresh = new Mat(width,height, CvType.CV_8UC4);
         mat4 = new Mat(width,height, CvType.CV_8UC4);
+        mat5 = new Mat(width,height, CvType.CV_8UC4);
+        blurred = new Mat(width,height, CvType.CV_8UC4);
         lower = new Scalar(29, 86, 6);
         upper = new Scalar(64, 255, 255);
 
         iCannyUpperThreshold = 100;
-        iMinRadius = 50;
+        iMinRadius = 60;
         iMaxRadius = 100;
-        iAccumulator = 60;
+        iAccumulator = 90;
         circles = new Mat();
 
-        drawCirclesDetection = false;
+        drawCirclesDetection = true;
     }
 
     @Override
@@ -244,6 +250,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         frameHSV.release();
         thresh.release();
         mat4.release();
+        mat5.release();
+        blurred.release();
     }
 
     @Override
@@ -254,12 +262,16 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Imgproc.cvtColor(frame,frameHSV,Imgproc.COLOR_BGR2HSV);
         Core.inRange(frameHSV,lower,upper,thresh);
 
-        //returns single channel image!
-        Imgproc.GaussianBlur( thresh, mat4, new Size(11, 11), 3, 3 );
 
-        Imgproc.HoughCircles(mat4, circles, Imgproc.CV_HOUGH_GRADIENT,2.0,
-                mat4.rows() / 8, iCannyUpperThreshold, iAccumulator, iMinRadius, iMaxRadius);
-        
+        Imgproc.erode(thresh,mat4,element);
+        Imgproc.dilate(mat4,mat5,element);
+
+        //returns single channel image!
+        Imgproc.GaussianBlur( mat5, blurred, new Size(11, 11), 3, 3 );
+
+        Imgproc.HoughCircles(blurred, circles, Imgproc.CV_HOUGH_GRADIENT,2.0,
+                blurred.rows() / 8, iCannyUpperThreshold, iAccumulator, iMinRadius, iMaxRadius);
+
         for (int i = 0; i < circles.cols(); i++){ // TODO: maybe replace this ?? I have 1 circle I dont need a loop !
 
             //circlesDetails[0]=x, 1=y, 2=radius
