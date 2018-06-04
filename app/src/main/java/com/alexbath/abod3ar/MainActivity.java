@@ -1,10 +1,12 @@
 package com.alexbath.abod3ar;
 
 import android.content.pm.ActivityInfo;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -12,6 +14,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
@@ -37,6 +40,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -63,6 +67,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private Button loadPlanButton;
     private static final int START_NETWORK_THREAD = 0;
     private static final int SERVER_POLLING = 1;
+    private boolean driveCollectionsAdded = false;
+    private Point center;
+    private ArrayList<TVElement> ElList;
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -88,7 +95,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         serverTextView.setMovementMethod(new ScrollingMovementMethod());
         connectToServerbutton = findViewById(R.id.connect_server_button);
         loadPlanButton  = findViewById(R.id.load_plan_button);
-
 
         networkEnquirerThread = new Thread(new Runnable() {
 
@@ -136,7 +142,21 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 String fileName = "plans/Plan4.inst";
                 List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
 
+                ConstraintLayout cl = findViewById(R.id.coordinatorLayout);
+                ElList = new ArrayList<TVElement>();
 
+                TVElement el = new TVElement(getApplicationContext(), "Drives", Color.YELLOW);
+                ElList.add(el);
+
+                for (DriveCollection driveCollection : driveCollections){
+                    ElList.add(new TVElement(getApplicationContext(), driveCollection.getNameOfElement(), Color.RED));
+                }
+
+                for(TVElement elt : ElList){
+                    cl.addView(elt.getTxtv());
+                }
+
+                driveCollectionsAdded = true;
             }
         });
 
@@ -239,7 +259,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         Imgproc.HoughCircles(mat4, circles, Imgproc.CV_HOUGH_GRADIENT,2.0,
                 mat4.rows() / 8, iCannyUpperThreshold, iAccumulator, iMinRadius, iMaxRadius);
-
+        
         for (int i = 0; i < circles.cols(); i++){ // TODO: maybe replace this ?? I have 1 circle I dont need a loop !
 
             //circlesDetails[0]=x, 1=y, 2=radius
@@ -249,17 +269,33 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             double circleY = Math.round(circlesDetails[1]);
             int radius = (int) Math.round(circlesDetails[2]);
 
-            Point center = new Point(circleX,circleY);
+            center = new Point(circleX,circleY);
 
             if(drawCirclesDetection){
                 Imgproc.circle(frame, center,2, new Scalar(0,0,255), -1, 8, 0 );
                 Imgproc.circle( frame, center, radius, new Scalar(0,0,255), 3, 8, 0 );
             }
 
-            serverTextView.setX((float) circleX);
-            serverTextView.setY((float) circleY);
+            //serverTextView.setX((float) (circleX - serverTextView.getWidth()/2));
+            //serverTextView.setY((float) (circleY - serverTextView.getHeight()/2));
 
-            Imgproc.line(frame, center, new Point(0,0), new Scalar(0,128,255),6);
+            if(driveCollectionsAdded){
+                ElList.get(0).getTxtv().setX((float) (circleX - ElList.get(0).getTxtv().getWidth()/2));
+                ElList.get(0).getTxtv().setY((float) (circleY - ElList.get(0).getTxtv().getHeight()/2));
+
+                for(int k = 1; k<ElList.size(); k++){
+                    float xV = (float) (circleX + radius*3*Math.cos(Math.PI/4*k));
+                    float yV = (float) (circleY + radius*3*Math.sin(Math.PI/4*k));
+
+                    //float xVd = (float) (circleX + radius*Math.cos(45*k));
+                    //float yVd = (float) (circleY + radius*Math.sin(45*k));
+
+                    ElList.get(k).getTxtv().setX(xV);
+                    ElList.get(k).getTxtv().setY(yV);
+
+                    Imgproc.line(frame, center, new Point(xV,yV), new Scalar(255,255,255),4);
+                }
+            }
         }
 
         return frame;
