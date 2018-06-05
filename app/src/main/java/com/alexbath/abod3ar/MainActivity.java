@@ -267,15 +267,16 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Imgproc.dilate(mat4,mat5,element);
 
         //returns single channel image!
-        Imgproc.GaussianBlur( mat5, blurred, new Size(11, 11), 3, 3 );
+        Imgproc.GaussianBlur( mat5, blurred, new Size(7, 7), 3, 3 );
 
         Imgproc.HoughCircles(blurred, circles, Imgproc.CV_HOUGH_GRADIENT,2.0,
                 blurred.rows() / 8, iCannyUpperThreshold, iAccumulator, iMinRadius, iMaxRadius);
 
-        for (int i = 0; i < circles.cols(); i++){ // TODO: maybe replace this ?? I have 1 circle I dont need a loop !
+        if(circles.cols() == 1 ){ // TODO: maybe replace this ?? I have 1 circle I dont need a loop !
 
+            int i = 0;
             //circlesDetails[0]=x, 1=y, 2=radius
-            double circlesDetails[] = circles.get(0, i);
+            double circlesDetails[] = circles.get(0, 0);
 
             double circleX = Math.round(circlesDetails[0]);
             double circleY = Math.round(circlesDetails[1]);
@@ -296,14 +297,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 ElList.get(0).getTxtv().setY((float) (circleY - ElList.get(0).getTxtv().getHeight()/2));
 
                 for(int k = 1; k<ElList.size(); k++){
-                    float xV = (float) (circleX + radius*6*Math.cos(Math.PI/4*k));
-                    float yV = (float) (circleY + radius*6*Math.sin(Math.PI/4*k));
+                    float xV = (float) (circleX + 300*Math.cos(Math.PI/4*k));
+                    float yV = (float) (circleY + 300*Math.sin(Math.PI/4*k));
 
                     //float xVd = (float) (circleX + radius*Math.cos(45*k));
                     //float yVd = (float) (circleY + radius*Math.sin(45*k));
 
-                    ElList.get(k).getTxtv().setX(xV);
-                    ElList.get(k).getTxtv().setY(yV);
+                    ElList.get(k).getTxtv().setX(Math.round(xV));
+                    ElList.get(k).getTxtv().setY(Math.round(yV));
 
                     Imgproc.line(frame, center, new Point(xV,yV), new Scalar(255,255,255),4);
                 }
