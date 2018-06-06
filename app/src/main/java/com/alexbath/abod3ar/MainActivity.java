@@ -67,10 +67,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private Button loadPlanButton;
     private static final int START_NETWORK_THREAD = 0;
     private static final int SERVER_POLLING = 1;
-    private boolean driveCollectionsAdded = false;
     private Point center;
     Mat element = null;
-    private ArrayList<TVElement> ElList;
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -144,20 +142,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
 
                 ConstraintLayout cl = findViewById(R.id.coordinatorLayout);
-                ElList = new ArrayList<TVElement>();
-
-                TVElement el = new TVElement(getApplicationContext(), "Drives", Color.YELLOW);
-                ElList.add(el);
 
                 for (DriveCollection driveCollection : driveCollections){
-                    ElList.add(new TVElement(getApplicationContext(), driveCollection.getNameOfElement(), Color.RED));
+                    System.out.println("driveCollection "+driveCollection.getNameOfElement());
                 }
 
-                for(TVElement elt : ElList){
-                    cl.addView(elt.getTxtv());
-                }
-
-                driveCollectionsAdded = true;
             }
         });
 
@@ -292,23 +281,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             //serverTextView.setX((float) (circleX - serverTextView.getWidth()/2));
             //serverTextView.setY((float) (circleY - serverTextView.getHeight()/2));
 
-            if(driveCollectionsAdded){
-                ElList.get(0).getTxtv().setX((float) (circleX - ElList.get(0).getTxtv().getWidth()/2));
-                ElList.get(0).getTxtv().setY((float) (circleY - ElList.get(0).getTxtv().getHeight()/2));
-
-                for(int k = 1; k<ElList.size(); k++){
-                    float xV = (float) (circleX + 300*Math.cos(Math.PI/4*k));
-                    float yV = (float) (circleY + 300*Math.sin(Math.PI/4*k));
-
-                    //float xVd = (float) (circleX + radius*Math.cos(45*k));
-                    //float yVd = (float) (circleY + radius*Math.sin(45*k));
-
-                    ElList.get(k).getTxtv().setX(Math.round(xV));
-                    ElList.get(k).getTxtv().setY(Math.round(yV));
-
-                    Imgproc.line(frame, center, new Point(xV,yV), new Scalar(255,255,255),4);
-                }
-            }
         }
 
         return frame;
