@@ -69,6 +69,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private static final int SERVER_POLLING = 1;
     private Point center;
     Mat element = null;
+    private ARPlanElement driveRoot = null;
+    private ArrayList<ARPlanElement> drivesList = null;
+    private boolean showElements = false;
+    private int nodeRadialOffset = 320;
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -142,11 +146,18 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
 
                 ConstraintLayout cl = findViewById(R.id.coordinatorLayout);
+                drivesList = new ArrayList<>();
+
+                driveRoot = new ARPlanElement(getApplicationContext(), "Drives", Color.YELLOW);
 
                 for (DriveCollection driveCollection : driveCollections){
-                    System.out.println("driveCollection "+driveCollection.getNameOfElement());
+                    ARPlanElement drive = new ARPlanElement(getApplicationContext(), driveCollection.getNameOfElement(), Color.RED);
+                    drivesList.add(drive);
+                    cl.addView(drive.getView());
                 }
 
+                cl.addView(driveRoot.getView());
+                showElements = true;
             }
         });
 
@@ -230,7 +241,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         iAccumulator = 60;
         circles = new Mat();
 
-        drawCirclesDetection = true;
+        drawCirclesDetection = false;
     }
 
     @Override
@@ -251,7 +262,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Imgproc.cvtColor(frame,frameHSV,Imgproc.COLOR_BGR2HSV);
         Core.inRange(frameHSV,lower,upper,thresh);
 
-
         Imgproc.erode(thresh,mat4,element);
         Imgproc.dilate(mat4,mat5,element);
 
@@ -261,7 +271,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Imgproc.HoughCircles(blurred, circles, Imgproc.CV_HOUGH_GRADIENT,2.0,
                 blurred.rows() / 8, iCannyUpperThreshold, iAccumulator, iMinRadius, iMaxRadius);
 
-        if(circles.cols() == 1 ){ // TODO: maybe replace this ?? I have 1 circle I dont need a loop !
+        if(circles.cols() == 1 ){
 
             int i = 0;
             //circlesDetails[0]=x, 1=y, 2=radius
@@ -278,9 +288,25 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 Imgproc.circle( frame, center, radius, new Scalar(0,0,255), 3, 8, 0 );
             }
 
-            //serverTextView.setX((float) (circleX - serverTextView.getWidth()/2));
-            //serverTextView.setY((float) (circleY - serverTextView.getHeight()/2));
+            if(showElements){
 
+                driveRoot.getView().setX((float) (circleX - driveRoot.getView().getWidth()/2));
+                driveRoot.getView().setY((float) (circleY - driveRoot.getView().getHeight()/2));
+
+                for(int k = 0; k<drivesList.size(); k++){
+
+                    //TODO: 4 should be drivesList.size()!
+                    float xV = (float) (circleX + nodeRadialOffset * Math.cos(Math.PI / 4 * (k + 1)));
+                    float yV = (float) (circleY + nodeRadialOffset * Math.sin(Math.PI / 4 * (k + 1)));
+
+                    drivesList.get(k).getView().setX(Math.round(xV));
+                    drivesList.get(k).getView().setY(Math.round(yV));
+
+                    Imgproc.line(frame, center,
+                                 new Point(xV + drivesList.get(k).getView().getWidth()/2,yV + drivesList.get(k).getView().getHeight()/2),
+                                 new Scalar(255,255,255),3);
+                }
+            }
         }
 
         return frame;
