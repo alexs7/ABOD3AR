@@ -53,17 +53,17 @@ public class Plan {
 //        driveElements.clear();
         driveCollections.clear();
     }
-//
-//    public ActionEvent createAction(String name) {
-//        ActionEvent action = findAction(name);
-//        if (action != null) {
-//            return action;
-//        }
-//        action = new ActionEvent(name);
-//        actionEvents.add(action);
-//
-//        return action;
-//    }
+
+    public ActionEvent createAction(String name) {
+        ActionEvent action = findAction(name);
+        if (action != null) {
+            return action;
+        }
+        action = new ActionEvent(name);
+        actionEvents.add(action);
+
+        return action;
+    }
 //
 //    public Sense createSense(String name) {
 //        Sense sense = findSense(name);
@@ -87,10 +87,10 @@ public class Plan {
 //        return sense;
 //    }
 
-//    public void addActionPattern(ActionPattern action) {
-//        actionPatterns.add(action);
-//    }
-//
+    public void addActionPattern(ActionPattern action) {
+        actionPatterns.add(action);
+    }
+
     public void addCompetence(Competence competence) {
         competences.add(competence);
     }
@@ -163,14 +163,14 @@ public class Plan {
     }
 
 
-//    public Competence findCompetence(String name) {
-//        for (Competence competence : competences) {
-//            if (competence.getNameOfElement().equals(name)) {
-//                return competence;
-//            }
-//        }
-//        return null;
-//    }
+    public Competence findCompetence(String name) {
+        for (Competence competence : competences) {
+            if (competence.getNameOfElement().equals(name)) {
+                return competence;
+            }
+        }
+        return null;
+    }
 
     public CompetenceElement findCompetenceElement(String name) {
         for (Competence competence : competences) {
@@ -207,14 +207,14 @@ public class Plan {
         return null;
     }
 
-//    public PlanElement findActionPatternOrCompetence(String name) {
-//        for (Competence competence : competences) {
-//            if (competence.getNameOfElement().equals(name)) {
-//                return competence;
-//            }
-//        }
-//        return findActionPattern(name);
-//    }
+    public PlanElement findActionPatternOrCompetence(String name) {
+        for (Competence competence : competences) {
+            if (competence.getNameOfElement().equals(name)) {
+                return competence;
+            }
+        }
+        return findActionPattern(name);
+    }
 
     public List<ActionPattern> findActionPatternsWithAction(String name) {
         List<ActionPattern> actionPatterns = new ArrayList<>();

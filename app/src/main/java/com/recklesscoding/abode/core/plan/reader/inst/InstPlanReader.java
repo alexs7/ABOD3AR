@@ -4,11 +4,11 @@ import android.content.Context;
 
 import com.recklesscoding.abode.core.plan.Plan;
 import com.recklesscoding.abode.core.plan.planelements.ElementWithTrigger;
-//import com.recklesscoding.abode.core.plan.planelements.PlanElement;
+import com.recklesscoding.abode.core.plan.planelements.PlanElement;
 import com.recklesscoding.abode.core.plan.planelements.action.ActionEvent;
 import com.recklesscoding.abode.core.plan.planelements.action.ActionPattern;
 import com.recklesscoding.abode.core.plan.planelements.competence.Competence;
-//import com.recklesscoding.abode.core.plan.planelements.competence.CompetenceElement;
+import com.recklesscoding.abode.core.plan.planelements.competence.CompetenceElement;
 import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
 import com.recklesscoding.abode.core.plan.reader.PlanReader;
 import com.recklesscoding.abode.core.plan.reader.inst.builders.InstPlanReaderHelper;
@@ -56,7 +56,7 @@ public class InstPlanReader extends PlanReader {
         BufferedReader file;
         while (runCounter < 5) {
             try {
-                file = new BufferedReader(new InputStreamReader(is));
+                file = new BufferedReader(new InputStreamReader(applicationContext.getAssets().open(fileName)));
 
                 while ((currentLine = file.readLine()) != null) {
                     currentLine = removeSpacesTabs(currentLine);
@@ -68,17 +68,17 @@ public class InstPlanReader extends PlanReader {
                     if (isStartingWithPrefix(currentLine, "// Competence: ") && (runCounter == 1)) {
                         createNewCompetence(currentLine, file, helper);
                     }
-//
-//                    if (isStartingWithPrefix(currentLine, "// ActionPattern: ") && (runCounter == 2)) {
-//                        createNewActionPattern(currentLine, file, helper);
-//                    }
-//
-//                    if (isStartingWithPrefix(currentLine, "// CompetenceElement: ") && (runCounter == 3)) {
-//                        createNewCompetenceElement(currentLine, file, helper);
-//                    }
-//                    if (isStartingWithPrefix(currentLine, "// ActionPatternElement: ") && (runCounter == 4)) {
-//                        createActionsForAP(file, helper);
-//                    }
+
+                    if (isStartingWithPrefix(currentLine, "// ActionPattern: ") && (runCounter == 2)) {
+                        createNewActionPattern(currentLine, file, helper);
+                    }
+
+                    if (isStartingWithPrefix(currentLine, "// CompetenceElement: ") && (runCounter == 3)) {
+                        createNewCompetenceElement(currentLine, file, helper);
+                    }
+                    if (isStartingWithPrefix(currentLine, "// ActionPatternElement: ") && (runCounter == 4)) {
+                        createActionsForAP(file, helper);
+                    }
                 }
             } catch (IOException e) {
                 // TODO: Exception handling
@@ -88,69 +88,69 @@ public class InstPlanReader extends PlanReader {
         }
     }
 
-//    private void createActionsForAP(BufferedReader file, InstPlanReaderHelper helper) throws IOException {
-//        boolean isDefinition = true;
-//        ActionPattern parrentElement = null;
-//        PlanElement childElement = null;
-//        String currentLine;
-//        while ((currentLine = file.readLine()) != null) {
-//            currentLine = removeSpacesTabs(currentLine);
-//            if (isParentLine(currentLine)) {
-//                parrentElement = (ActionPattern) Plan.getInstance().findActionPattern(helper.getParentName(currentLine, 0));
-//            }
-//            if (isChildrenLine(currentLine)) {
-//                childElement = Plan.getInstance().findCompetence(currentLine);
-//                if (childElement == null) {
-//                    childElement = Plan.getInstance().findActionPattern(helper.getChildName(currentLine));
-//                }
-//                if (childElement == null) {
-//                    childElement = Plan.getInstance().createAction(helper.getChildName(currentLine));
-//                }
-//
-//            }
-//            if (isPELEMLine(currentLine)) {
-//                isDefinition = false;
-//            }
-//            if (isEndOfBlock(currentLine)) {
-//                break;
-//            }
-//        }
-//        if (isDefinition) {
-//            if (!(childElement instanceof ActionEvent))
-//                parrentElement.setTriggeredElement(childElement);
-//            else
-//                parrentElement.addAction((ActionEvent) childElement);
-//        }
-//    }
+    private void createActionsForAP(BufferedReader file, InstPlanReaderHelper helper) throws IOException {
+        boolean isDefinition = true;
+        ActionPattern parrentElement = null;
+        PlanElement childElement = null;
+        String currentLine;
+        while ((currentLine = file.readLine()) != null) {
+            currentLine = removeSpacesTabs(currentLine);
+            if (isParentLine(currentLine)) {
+                parrentElement = (ActionPattern) Plan.getInstance().findActionPattern(helper.getParentName(currentLine, 0));
+            }
+            if (isChildrenLine(currentLine)) {
+                childElement = Plan.getInstance().findCompetence(currentLine);
+                if (childElement == null) {
+                    childElement = Plan.getInstance().findActionPattern(helper.getChildName(currentLine));
+                }
+                if (childElement == null) {
+                    childElement = Plan.getInstance().createAction(helper.getChildName(currentLine));
+                }
 
-//    private void createNewActionPattern(String currentLine, BufferedReader file, InstPlanReaderHelper helper) throws IOException {
-//        ActionPattern actionPattern = helper.buildActionPattern(currentLine);
-//
-//        boolean isDefinition = true;
-//        ElementWithTrigger parrent;
-//        while ((currentLine = file.readLine()) != null) {
-//            currentLine = removeSpacesTabs(currentLine);
-//            if (isParentLine(currentLine)) {
-//                for (int i = 0; i < helper.getNumberOfParents(currentLine); i++) {
-//                    parrent = Plan.getInstance().findDriveCollection(helper.getParentName(currentLine, i));
-//                    if (parrent == null)
-//                        parrent = Plan.getInstance().findCompetenceElement(helper.getParentName(currentLine, i));
-//                    if (parrent == null)
-//                        parrent = (ElementWithTrigger) Plan.getInstance().findActionPattern(helper.getParentName(currentLine, i));
-//                    if (parrent != null) {
-//                        parrent.setTriggeredElement(actionPattern);
-//                    }
-//                }
-//            }
-//            if (isPELEMLine(currentLine))
-//                isDefinition = false;
-//            if (isEndOfBlock(currentLine))
-//                break;
-//        }
-//        if (isDefinition) {
-//            Plan.getInstance().addActionPattern(actionPattern);
-//        }
-//    }
+            }
+            if (isPELEMLine(currentLine)) {
+                isDefinition = false;
+            }
+            if (isEndOfBlock(currentLine)) {
+                break;
+            }
+        }
+        if (isDefinition) {
+            if (!(childElement instanceof ActionEvent))
+                parrentElement.setTriggeredElement(childElement);
+            else
+                parrentElement.addAction((ActionEvent) childElement);
+        }
+    }
+
+    private void createNewActionPattern(String currentLine, BufferedReader file, InstPlanReaderHelper helper) throws IOException {
+        ActionPattern actionPattern = helper.buildActionPattern(currentLine);
+
+        boolean isDefinition = true;
+        ElementWithTrigger parrent;
+        while ((currentLine = file.readLine()) != null) {
+            currentLine = removeSpacesTabs(currentLine);
+            if (isParentLine(currentLine)) {
+                for (int i = 0; i < helper.getNumberOfParents(currentLine); i++) {
+                    parrent = Plan.getInstance().findDriveCollection(helper.getParentName(currentLine, i));
+                    if (parrent == null)
+                        parrent = Plan.getInstance().findCompetenceElement(helper.getParentName(currentLine, i));
+                    if (parrent == null)
+                        parrent = (ElementWithTrigger) Plan.getInstance().findActionPattern(helper.getParentName(currentLine, i));
+                    if (parrent != null) {
+                        parrent.setTriggeredElement(actionPattern);
+                    }
+                }
+            }
+            if (isPELEMLine(currentLine))
+                isDefinition = false;
+            if (isEndOfBlock(currentLine))
+                break;
+        }
+        if (isDefinition) {
+            Plan.getInstance().addActionPattern(actionPattern);
+        }
+    }
 
     private void createNewCompetence(String currentLine, BufferedReader file, InstPlanReaderHelper helper) throws IOException {
         Competence competence = helper.buildCompetence(currentLine);
@@ -202,33 +202,33 @@ public class InstPlanReader extends PlanReader {
             Plan.getInstance().addDriveCollection(driveCollection);
     }
 
-//    private void createNewCompetenceElement(String currentLine, BufferedReader file, InstPlanReaderHelper helper) throws IOException {
-//        CompetenceElement competenceElement = helper.buildCompetenceElement(currentLine);
-//        Competence competence = null;
-//        boolean isDefinition = true;
-//        while ((currentLine = file.readLine()) != null) {
-//            currentLine = removeSpacesTabs(currentLine);
-//            if (isParentLine(currentLine))
-//                competence = Plan.getInstance().findCompetence(helper.getParentName(currentLine, 0));
-//            if (isChildrenLine(currentLine)) {
-//                PlanElement triggeredElement = Plan.getInstance().findActionPatternOrCompetence(helper.getChildName(currentLine));
-//                if (triggeredElement != null) {
-//                    competenceElement.setTriggeredElement(triggeredElement);
-//                } else {
-//                    competenceElement.setTriggeredElement(Plan.getInstance().createAction(helper.getChildName(currentLine)));
-//                }
-//            }
-//            if (isSense(currentLine)) {
-//                //TODO: Sense
-//            }
-//            if (isPELEMLine(currentLine))
-//                isDefinition = false;
-//            if (isEndOfBlock(currentLine))
-//                break;
-//        }
-//        if (isDefinition)
-//            competence.addCompetenceElement(competenceElement);
-//    }
+    private void createNewCompetenceElement(String currentLine, BufferedReader file, InstPlanReaderHelper helper) throws IOException {
+        CompetenceElement competenceElement = helper.buildCompetenceElement(currentLine);
+        Competence competence = null;
+        boolean isDefinition = true;
+        while ((currentLine = file.readLine()) != null) {
+            currentLine = removeSpacesTabs(currentLine);
+            if (isParentLine(currentLine))
+                competence = Plan.getInstance().findCompetence(helper.getParentName(currentLine, 0));
+            if (isChildrenLine(currentLine)) {
+                PlanElement triggeredElement = Plan.getInstance().findActionPatternOrCompetence(helper.getChildName(currentLine));
+                if (triggeredElement != null) {
+                    competenceElement.setTriggeredElement(triggeredElement);
+                } else {
+                    competenceElement.setTriggeredElement(Plan.getInstance().createAction(helper.getChildName(currentLine)));
+                }
+            }
+            if (isSense(currentLine)) {
+                //TODO: Sense
+            }
+            if (isPELEMLine(currentLine))
+                isDefinition = false;
+            if (isEndOfBlock(currentLine))
+                break;
+        }
+        if (isDefinition)
+            competence.addCompetenceElement(competenceElement);
+    }
 
     private boolean isSense(String currentLine) {
         return isStartingWithPrefix(currentLine, "// \tSense: ");
