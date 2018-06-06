@@ -1,7 +1,7 @@
 package com.recklesscoding.abode.core.plan.reader.inst.builders;
 
 //import com.recklesscoding.abode.core.plan.planelements.action.ActionPattern;
-//import com.recklesscoding.abode.core.plan.planelements.competence.Competence;
+import com.recklesscoding.abode.core.plan.planelements.competence.Competence;
 //import com.recklesscoding.abode.core.plan.planelements.competence.CompetenceElement;
 import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
 
@@ -15,9 +15,9 @@ public class InstPlanReaderHelper {
 //        return new ActionPattern(getElementName(nameLine));
 //    }
 //
-//    public Competence buildCompetence(String nameLine) {
-//        return new Competence(getElementName(nameLine));
-//    }
+    public Competence buildCompetence(String nameLine) {
+        return new Competence(getElementName(nameLine));
+    }
 //
 //    public CompetenceElement buildCompetenceElement(String nameLine) {
 //        return new CompetenceElement(getElementName(nameLine));

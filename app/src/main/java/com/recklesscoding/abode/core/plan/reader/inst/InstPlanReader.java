@@ -3,11 +3,11 @@ package com.recklesscoding.abode.core.plan.reader.inst;
 import android.content.Context;
 
 import com.recklesscoding.abode.core.plan.Plan;
-//import com.recklesscoding.abode.core.plan.planelements.ElementWithTrigger;
+import com.recklesscoding.abode.core.plan.planelements.ElementWithTrigger;
 //import com.recklesscoding.abode.core.plan.planelements.PlanElement;
-//import com.recklesscoding.abode.core.plan.planelements.action.ActionEvent;
-//import com.recklesscoding.abode.core.plan.planelements.action.ActionPattern;
-//import com.recklesscoding.abode.core.plan.planelements.competence.Competence;
+import com.recklesscoding.abode.core.plan.planelements.action.ActionEvent;
+import com.recklesscoding.abode.core.plan.planelements.action.ActionPattern;
+import com.recklesscoding.abode.core.plan.planelements.competence.Competence;
 //import com.recklesscoding.abode.core.plan.planelements.competence.CompetenceElement;
 import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
 import com.recklesscoding.abode.core.plan.reader.PlanReader;
@@ -65,9 +65,9 @@ public class InstPlanReader extends PlanReader {
                         createNewDriveCollection(currentLine, file, helper);
                     }
 
-//                    if (isStartingWithPrefix(currentLine, "// Competence: ") && (runCounter == 1)) {
-//                        createNewCompetence(currentLine, file, helper);
-//                    }
+                    if (isStartingWithPrefix(currentLine, "// Competence: ") && (runCounter == 1)) {
+                        createNewCompetence(currentLine, file, helper);
+                    }
 //
 //                    if (isStartingWithPrefix(currentLine, "// ActionPattern: ") && (runCounter == 2)) {
 //                        createNewActionPattern(currentLine, file, helper);
@@ -152,48 +152,48 @@ public class InstPlanReader extends PlanReader {
 //        }
 //    }
 
-//    private void createNewCompetence(String currentLine, BufferedReader file, InstPlanReaderHelper helper) throws IOException {
-//        Competence competence = helper.buildCompetence(currentLine);
-//
-//        boolean isDefinition = true;
-//        ElementWithTrigger parrent;
-//        while ((currentLine = file.readLine()) != null) {
-//            currentLine = removeSpacesTabs(currentLine);
-//            if (isParentLine(currentLine)) {
-//                for (int i = 0; i < helper.getNumberOfParents(currentLine); i++) {
-//                    parrent = Plan.getInstance().findDriveCollection(helper.getParentName(currentLine, i));
-//                    if (parrent == null) {
-//                        parrent = Plan.getInstance().findCompetenceElement(helper.getParentName(currentLine, i));
-//                    }
-//                    if (parrent == null) {
-//                        parrent = (ElementWithTrigger) Plan.getInstance().findActionPattern(helper.getParentName(currentLine, i));
-//                    }
-//                    if (parrent != null) {
-//                        parrent.setTriggeredElement(competence);
-//                    }
-//                    if (parrent == null) {
-//                        ActionEvent action = Plan.getInstance().findAction(competence.getNameOfElement());
-//                        if (action != null) {
-//                            List<ActionPattern> actionPatternsWithAction = Plan.getInstance().findActionPatternsWithAction(competence.getNameOfElement());
-//                            for (ActionPattern actionPattern : actionPatternsWithAction) {
-//                                actionPattern.removeActionEvent(action);
-//                                actionPattern.setTriggeredElement(competence);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            if (isPELEMLine(currentLine)) {
-//                isDefinition = false;
-//            }
-//            if (isEndOfBlock(currentLine)) {
-//                break;
-//            }
-//        }
-//        if (isDefinition) {
-//            Plan.getInstance().addCompetence(competence);
-//        }
-//    }
+    private void createNewCompetence(String currentLine, BufferedReader file, InstPlanReaderHelper helper) throws IOException {
+        Competence competence = helper.buildCompetence(currentLine);
+
+        boolean isDefinition = true;
+        ElementWithTrigger parrent;
+        while ((currentLine = file.readLine()) != null) {
+            currentLine = removeSpacesTabs(currentLine);
+            if (isParentLine(currentLine)) {
+                for (int i = 0; i < helper.getNumberOfParents(currentLine); i++) {
+                    parrent = Plan.getInstance().findDriveCollection(helper.getParentName(currentLine, i));
+                    if (parrent == null) {
+                        parrent = Plan.getInstance().findCompetenceElement(helper.getParentName(currentLine, i));
+                    }
+                    if (parrent == null) {
+                        parrent = (ElementWithTrigger) Plan.getInstance().findActionPattern(helper.getParentName(currentLine, i));
+                    }
+                    if (parrent != null) {
+                        parrent.setTriggeredElement(competence);
+                    }
+                    if (parrent == null) {
+                        ActionEvent action = Plan.getInstance().findAction(competence.getNameOfElement());
+                        if (action != null) {
+                            List<ActionPattern> actionPatternsWithAction = Plan.getInstance().findActionPatternsWithAction(competence.getNameOfElement());
+                            for (ActionPattern actionPattern : actionPatternsWithAction) {
+                                actionPattern.removeActionEvent(action);
+                                actionPattern.setTriggeredElement(competence);
+                            }
+                        }
+                    }
+                }
+            }
+            if (isPELEMLine(currentLine)) {
+                isDefinition = false;
+            }
+            if (isEndOfBlock(currentLine)) {
+                break;
+            }
+        }
+        if (isDefinition) {
+            Plan.getInstance().addCompetence(competence);
+        }
+    }
 
     private void createNewDriveCollection(String currentLine, BufferedReader file, InstPlanReaderHelper helper) throws IOException {
         DriveCollection driveCollection = helper.buildDriveCollector(currentLine);

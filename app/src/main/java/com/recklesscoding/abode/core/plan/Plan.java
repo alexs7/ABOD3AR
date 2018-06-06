@@ -1,11 +1,11 @@
 package com.recklesscoding.abode.core.plan;
 
-//import com.recklesscoding.abode.core.plan.planelements.PlanElement;
+import com.recklesscoding.abode.core.plan.planelements.PlanElement;
 //import com.recklesscoding.abode.core.plan.planelements.Sense;
-//import com.recklesscoding.abode.core.plan.planelements.action.ActionEvent;
-//import com.recklesscoding.abode.core.plan.planelements.action.ActionPattern;
-//import com.recklesscoding.abode.core.plan.planelements.competence.Competence;
-//import com.recklesscoding.abode.core.plan.planelements.competence.CompetenceElement;
+import com.recklesscoding.abode.core.plan.planelements.action.ActionEvent;
+import com.recklesscoding.abode.core.plan.planelements.action.ActionPattern;
+import com.recklesscoding.abode.core.plan.planelements.competence.Competence;
+import com.recklesscoding.abode.core.plan.planelements.competence.CompetenceElement;
 import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
 //import com.recklesscoding.abode.core.plan.planelements.drives.DriveElement;
 
@@ -23,11 +23,11 @@ public class Plan {
 
 //    private volatile List<Sense> senses = new LinkedList<>();
 //
-//    private volatile List<ActionEvent> actionEvents = new LinkedList<>();
+    private volatile List<ActionEvent> actionEvents = new LinkedList<>();
 //
-//    private volatile List<ActionPattern> actionPatterns = new LinkedList<>();
+    private volatile List<ActionPattern> actionPatterns = new LinkedList<>();
 //
-//    private volatile List<Competence> competences = new LinkedList<>();
+    private volatile List<Competence> competences = new LinkedList<>();
 //
 //    private volatile List<CompetenceElement> competenceElements = new LinkedList<>();
 //
@@ -91,9 +91,9 @@ public class Plan {
 //        actionPatterns.add(action);
 //    }
 //
-//    public void addCompetence(Competence competence) {
-//        competences.add(competence);
-//    }
+    public void addCompetence(Competence competence) {
+        competences.add(competence);
+    }
 //
 //    public void addCompetenceElement(CompetenceElement competenceElement) {
 //        competenceElements.add(competenceElement);
@@ -127,9 +127,9 @@ public class Plan {
 //        return actionPatterns;
 //    }
 //
-//    public List<ActionEvent> getActionEvents() {
-//        return actionEvents;
-//    }
+    public List<ActionEvent> getActionEvents() {
+        return actionEvents;
+    }
 
     public void removeDriveCollection(DriveCollection driveCollection) {
         driveCollections.remove(driveCollection);
@@ -144,23 +144,23 @@ public class Plan {
 //        return null;
 //    }
 
-//    public ActionEvent findAction(String name) {
-//        for (ActionEvent actionEvent : actionEvents) {
-//            if (actionEvent.getNameOfElement().equals(name)) {
-//                return actionEvent;
-//            }
-//        }
-//        return null;
-//    }
+    public ActionEvent findAction(String name) {
+        for (ActionEvent actionEvent : actionEvents) {
+            if (actionEvent.getNameOfElement().equals(name)) {
+                return actionEvent;
+            }
+        }
+        return null;
+    }
 
-//    public PlanElement findActionPattern(String name) {
-//        for (ActionPattern actionsPattern : actionPatterns) {
-//            if (actionsPattern.getNameOfElement().equals(name)) {
-//                return actionsPattern;
-//            }
-//        }
-//        return null;
-//    }
+    public PlanElement findActionPattern(String name) {
+        for (ActionPattern actionsPattern : actionPatterns) {
+            if (actionsPattern.getNameOfElement().equals(name)) {
+                return actionsPattern;
+            }
+        }
+        return null;
+    }
 
 
 //    public Competence findCompetence(String name) {
@@ -172,15 +172,15 @@ public class Plan {
 //        return null;
 //    }
 
-//    public CompetenceElement findCompetenceElement(String name) {
-//        for (Competence competence : competences) {
-//            for (CompetenceElement competenceElement : competence.getCompetenceElements()) {
-//                if (competenceElement.getNameOfElement().equals(name))
-//                    return competenceElement;
-//            }
-//        }
-//        return null;
-//    }
+    public CompetenceElement findCompetenceElement(String name) {
+        for (Competence competence : competences) {
+            for (CompetenceElement competenceElement : competence.getCompetenceElements()) {
+                if (competenceElement.getNameOfElement().equals(name))
+                    return competenceElement;
+            }
+        }
+        return null;
+    }
 
 //    public CompetenceElement findCompetenceElementXPOSH(String name) {
 //        for (CompetenceElement competenceElement : competenceElements) {
@@ -216,17 +216,17 @@ public class Plan {
 //        return findActionPattern(name);
 //    }
 
-//    public List<ActionPattern> findActionPatternsWithAction(String name) {
-//        List<ActionPattern> actionPatterns = new ArrayList<>();
-//
-//        for (ActionPattern actionsPattern : actionPatterns) {
-//            for (ActionEvent actionEvent : actionsPattern.getActionEvents()) {
-//                if (actionEvent.getNameOfElement().equals(name)) {
-//                    actionPatterns.add(actionsPattern);
-//                }
-//            }
-//        }
-//
-//        return actionPatterns;
-//    }
+    public List<ActionPattern> findActionPatternsWithAction(String name) {
+        List<ActionPattern> actionPatterns = new ArrayList<>();
+
+        for (ActionPattern actionsPattern : actionPatterns) {
+            for (ActionEvent actionEvent : actionsPattern.getActionEvents()) {
+                if (actionEvent.getNameOfElement().equals(name)) {
+                    actionPatterns.add(actionsPattern);
+                }
+            }
+        }
+
+        return actionPatterns;
+    }
 }
