@@ -6,10 +6,13 @@ import android.graphics.drawable.GradientDrawable;
 import android.view.View;
 import android.widget.TextView;
 
+import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
+
 class ARPlanElement {
 
-    private TextView element = null;
-    GradientDrawable drawable = null;
+    private TextView element;
+    private GradientDrawable drawable;
+    private DriveCollection driveCollection;
 
     public ARPlanElement(Context applicationContext, String text, int borderColor){
         element = (TextView) View.inflate(applicationContext, R.layout.plan_element, null);
@@ -26,4 +29,7 @@ class ARPlanElement {
         drawable.setColor(Color.WHITE);
     }
 
+    public void setDriveCollection(DriveCollection driveCollection) {
+        this.driveCollection = driveCollection;
+    }
 }

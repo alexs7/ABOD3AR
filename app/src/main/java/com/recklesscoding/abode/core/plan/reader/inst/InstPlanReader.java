@@ -39,13 +39,6 @@ public class InstPlanReader extends PlanReader {
 
     private void readInstFile(String fileName) {
 
-        InputStream is = null;
-        try {
-            is = applicationContext.getAssets().open(fileName);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         //All of them are local parameter, we don't need them in the memory after their job is done.
         InstPlanReaderHelper helper = new InstPlanReaderHelper();
 

@@ -151,9 +151,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 driveRoot = new ARPlanElement(getApplicationContext(), "Drives", Color.YELLOW);
 
                 for (DriveCollection driveCollection : driveCollections){
-                    ARPlanElement drive = new ARPlanElement(getApplicationContext(), driveCollection.getNameOfElement(), Color.RED);
-                    drivesList.add(drive);
-                    cl.addView(drive.getView());
+                    ARPlanElement planElement = new ARPlanElement(getApplicationContext(), driveCollection.getNameOfElement(), Color.RED);
+                    planElement.setDriveCollection(driveCollection);
+                    drivesList.add(planElement);
+                    cl.addView(planElement.getView());
                 }
 
                 cl.addView(driveRoot.getView());
