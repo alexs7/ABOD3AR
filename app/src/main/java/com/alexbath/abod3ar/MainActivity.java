@@ -1,5 +1,7 @@
 package com.alexbath.abod3ar;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -20,6 +22,9 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.recklesscoding.abode.core.plan.Plan;
+import com.recklesscoding.abode.core.plan.planelements.PlanElement;
+import com.recklesscoding.abode.core.plan.planelements.action.ActionEvent;
 import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -110,13 +115,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 String response = null;
 
                 try {
-                    socket = new Socket("192.168.178.21", 3001);
+                    System.out.println("ANDROID connecting to server...");
+                    socket = new Socket("138.38.98.51", 3001);
                     out = new PrintWriter(socket.getOutputStream(), true);
                     br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
                     while(true){
                         try {
-                            Thread.sleep(150);
+                            Thread.sleep(50); //network is might be slow too!
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -142,7 +148,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         loadPlanButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                String fileName = "plans/Plan4.inst";
+                String fileName = "plans/DiaPlan3.inst";
                 List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
 
                 ConstraintLayout cl = findViewById(R.id.coordinatorLayout);
@@ -159,6 +165,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                 cl.addView(driveRoot.getView());
                 showElements = true;
+
             }
         });
 
@@ -334,6 +341,22 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                     break;
                     case 1:
                         serverTextView.append("\n"+msg.obj);
+
+                        String[] splittedLine = ((String) msg.obj).split(" ");
+                        PlanElement planElement = null;
+                        String typeOfPlanElement;
+                        String planElementName = splittedLine[3];
+
+                        if (isValidLine(splittedLine)) {
+                            typeOfPlanElement = splittedLine[2];
+                            if (!isActionPatternElement(typeOfPlanElement)) { //We ignore ActionPatternELements as they are instinct only
+                                planElement = getPlanElement(typeOfPlanElement, planElement, planElementName);
+                                if (planElement != null) {
+                                    //planElement.setToUpdate();
+                                }
+                            }
+                        }
+
                         break;
                     default:
                         super.handleMessage(msg);
@@ -360,6 +383,55 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             cameraBridgeViewBase.disableView();
         }
         super.onDestroy();
+    }
+
+    private boolean isValidLine(String[] splittedLine) {
+        return !splittedLine[0].startsWith("*") && splittedLine.length >= 4;
+    }
+
+    private boolean isActionPatternElement(String typeOfPlanElement) {
+        return typeOfPlanElement.startsWith("APE");
+    }
+
+    private boolean isActionPattern(String typeOfPlanElement) {
+        return typeOfPlanElement.equals("AP");
+    }
+
+    private boolean isAction(String typeOfPlanElement) {
+        return typeOfPlanElement.equals("A");
+    }
+
+    private boolean isCompetence(String typeOfPlanElement) {
+        return typeOfPlanElement.equals("C");
+    }
+
+    private boolean isCompetenceElement(String typeOfPlanElement) {
+        return typeOfPlanElement.equals("CE");
+    }
+
+    private boolean isDrive(String typeOfPlanElement) {
+        return typeOfPlanElement.equals("D");
+    }
+
+    private PlanElement getPlanElement(String typeOfPlanElement, PlanElement planElement, String planElementName) {
+        if (isAction(typeOfPlanElement)) {
+            planElement = Plan.getInstance().findAction(planElementName);
+            if (planElement == null) {
+                planElement = new ActionEvent(planElementName);
+            }
+        } else if (isActionPattern(typeOfPlanElement)) {
+            planElement = Plan.getInstance().findActionPattern(planElementName);
+            if (planElement == null) {
+                planElement = new ActionEvent(planElementName);
+            }
+        } else if (isCompetence(typeOfPlanElement)) {
+            planElement = Plan.getInstance().findCompetence(planElementName);
+        } else if (isCompetenceElement(typeOfPlanElement)) {
+            planElement = Plan.getInstance().findCompetenceElement(planElementName);
+        } else if (isDrive(typeOfPlanElement)) {
+            planElement = Plan.getInstance().findDriveCollection(planElementName);
+        }
+        return planElement;
     }
 
 }
