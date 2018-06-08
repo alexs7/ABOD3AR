@@ -20,7 +20,7 @@ public class PlanElement {
 
     private boolean isSetToUpdate = false;
 
-//    private List<PlanElementNode> planElementNodes = new ArrayList<>();
+    //private List<PlanElementNode> planElementNodes = new ArrayList<>();
 
     public PlanElement(String nameOfElement) {
         this.nameOfElement = nameOfElement;
