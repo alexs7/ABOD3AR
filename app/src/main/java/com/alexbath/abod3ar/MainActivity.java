@@ -1,7 +1,5 @@
 package com.alexbath.abod3ar;
 
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -16,7 +14,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
@@ -53,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private static final String OPENCVTAG = "OpenCVCamera";
     private static final String SERVERTAG = "SERVER";
     private CameraBridgeViewBase cameraBridgeViewBase;
-    private Mat frame,frameHSV,thresh,mat4,mat5,blurred;
+    private Mat frame,frameHSV,thresh, eroded, dilated,blurred;
     private BaseLoaderCallback baseLoaderCallback;
     private TextView statusTextView;
     private TextView serverTextView;
@@ -116,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                 try {
                     System.out.println("ANDROID connecting to server...");
-                    socket = new Socket("138.38.98.51", 3001);
+                    socket = new Socket("138.38.99.31", 3001);
                     out = new PrintWriter(socket.getOutputStream(), true);
                     br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
@@ -146,30 +143,29 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             }
         });
 
-        loadPlanButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                String fileName = "plans/DiaPlan3.inst";
-                List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
+        loadPlanButton.setOnClickListener(v -> {
+            String fileName = "plans/DiaPlan3.inst";
+            List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
 
-                ConstraintLayout cl = findViewById(R.id.coordinatorLayout);
-                drivesList = new ArrayList<>();
+            ConstraintLayout cl = findViewById(R.id.coordinatorLayout);
+            drivesList = new ArrayList<>();
 
-                driveRoot = new ARPlanElement(getApplicationContext(), "Drives", Color.YELLOW);
+            driveRoot = new ARPlanElement(getApplicationContext(), "Drives", Color.YELLOW);
 
-                for (DriveCollection driveCollection : driveCollections){
-                    ARPlanElement planElement = new ARPlanElement(getApplicationContext(), driveCollection.getNameOfElement(), Color.RED);
-                    planElement.setDriveCollection(driveCollection);
-                    drivesList.add(planElement);
-                    cl.addView(planElement.getView());
-                }
-
-                cl.addView(driveRoot.getView());
-                showElements = true;
-
+            for (DriveCollection driveCollection : driveCollections){
+                ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), driveCollection.getNameOfElement(), Color.RED);
+                arPlanElement.setUIName(driveCollection.getNameOfElement());
+                drivesList.add(arPlanElement);
+                cl.addView(arPlanElement.getView());
             }
+
+            cl.addView(driveRoot.getView());
+            showElements = true;
+
         });
 
         cameraBridgeViewBase = (JavaCameraView) findViewById(R.id.openCVCameraView);
+        //cameraBridgeViewBase.setMaxFrameSize(1600,900); // this will improve performance!!
         cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         cameraBridgeViewBase.setCvCameraViewListener(this);
 
@@ -237,8 +233,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         frame = new Mat(width,height, CvType.CV_8UC4);
         frameHSV = new Mat(width,height, CvType.CV_8UC4);
         thresh = new Mat(width,height, CvType.CV_8UC4);
-        mat4 = new Mat(width,height, CvType.CV_8UC4);
-        mat5 = new Mat(width,height, CvType.CV_8UC4);
+        eroded = new Mat(width,height, CvType.CV_8UC4);
+        dilated = new Mat(width,height, CvType.CV_8UC4);
         blurred = new Mat(width,height, CvType.CV_8UC4);
         lower = new Scalar(29, 86, 6);
         upper = new Scalar(64, 255, 255);
@@ -257,8 +253,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         frame.release();
         frameHSV.release();
         thresh.release();
-        mat4.release();
-        mat5.release();
+        eroded.release();
+        dilated.release();
         blurred.release();
     }
 
@@ -270,11 +266,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Imgproc.cvtColor(frame,frameHSV,Imgproc.COLOR_BGR2HSV);
         Core.inRange(frameHSV,lower,upper,thresh);
 
-        Imgproc.erode(thresh,mat4,element);
-        Imgproc.dilate(mat4,mat5,element);
+        Imgproc.erode(thresh, eroded,element);
+        Imgproc.dilate(eroded, dilated,element);
 
         //returns single channel image!
-        Imgproc.GaussianBlur( mat5, blurred, new Size(7, 7), 3, 3 );
+        Imgproc.GaussianBlur(dilated, blurred, new Size(7, 7), 3, 3 );
 
         Imgproc.HoughCircles(blurred, circles, Imgproc.CV_HOUGH_GRADIENT,2.0,
                 blurred.rows() / 8, iCannyUpperThreshold, iAccumulator, iMinRadius, iMaxRadius);
@@ -352,6 +348,18 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                             if (!isActionPatternElement(typeOfPlanElement)) { //We ignore ActionPatternELements as they are instinct only
                                 planElement = getPlanElement(typeOfPlanElement, planElement, planElementName);
                                 if (planElement != null) {
+
+                                    if(typeOfPlanElement.equals("D")){
+                                        for (ARPlanElement drive : drivesList){
+//                                            if(drive.getUIName().equals(planElementName)){
+//                                                //increase flash/blink freq
+//                                                drive.setBackgroundColor(Color.BLUE);
+//                                            }else{
+//                                                //decrease flash/blink freq
+//                                                drive.setBackgroundColor(Color.parseColor("#2f4f4f"));
+//                                            }
+                                        }
+                                    }
                                     //planElement.setToUpdate();
                                 }
                             }

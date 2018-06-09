@@ -12,7 +12,7 @@ class ARPlanElement {
 
     private TextView element;
     private GradientDrawable drawable;
-    private DriveCollection driveCollection;
+    private String uIName;
 
     public ARPlanElement(Context applicationContext, String text, int borderColor){
         element = (TextView) View.inflate(applicationContext, R.layout.plan_element, null);
@@ -26,10 +26,14 @@ class ARPlanElement {
     }
 
     public void setBackgroundColor(int color){
-        drawable.setColor(Color.WHITE);
+        drawable.setColor(color);
     }
 
-    public void setDriveCollection(DriveCollection driveCollection) {
-        this.driveCollection = driveCollection;
+    public void setUIName(String UIName) {
+        this.uIName = UIName;
+    }
+
+    public String getUIName() {
+        return uIName;
     }
 }
