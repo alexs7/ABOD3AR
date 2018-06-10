@@ -64,11 +64,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private boolean drawCirclesDetection;
     private int robotIdx = 0;
     private Thread networkEnquirerThread;
-    private Handler networkEnquirerResponseHandler;
+    private Handler generalHandler;
+    private Thread uiFlasherThread;
     private Button connectToServerbutton;
     private Button loadPlanButton;
-    private static final int START_NETWORK_THREAD = 0;
-    private static final int SERVER_POLLING = 1;
+    private static final int START_SERVER_POLLING = 0;
+    private static final int SERVER_RESPONSE = 1;
+    private static final int START_FLASHING = 2;
+    private static final int ARELEMENT_BACKGROUND_COLOR_CHANGE = 3;
     private Point center;
     Mat element = null;
     private ARPlanElement driveRoot = null;
@@ -103,17 +106,16 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         networkEnquirerThread = new Thread(new Runnable() {
 
-            @Override
-            public void run() {
+            Socket socket = null;
+            PrintWriter out = null;
+            BufferedReader br = null;
+            String response = null;
 
-                Socket socket = null;
-                PrintWriter out = null;
-                BufferedReader br = null;
-                String response = null;
+            @Override
+            public void run(){
 
                 try {
-                    System.out.println("ANDROID connecting to server...");
-                    socket = new Socket("138.38.99.31", 3001);
+                    socket = new Socket("192.168.178.21", 3001);
                     out = new PrintWriter(socket.getOutputStream(), true);
                     br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
@@ -123,12 +125,18 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        out.println("Request for Robot: "+robotIdx);
+
+                        String request = getRequestFromUIPlan(drivesList);
+
+                        //out.println("Request for Robot: "+robotIdx);
+                        out.println(request);
                         response = br.readLine();
-                        Message message = new Message();
-                        message.what = SERVER_POLLING;
-                        message.obj = response;
-                        networkEnquirerResponseHandler.sendMessage(message);
+                        if(!response.equals("doNothing")){
+                            Message message = new Message();
+                            message.what = SERVER_RESPONSE;
+                            message.obj = response;
+                            generalHandler.sendMessage(message);
+                        }
                     }
 
                 } catch (IOException e) {
@@ -139,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         connectToServerbutton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                networkEnquirerResponseHandler.sendEmptyMessage(START_NETWORK_THREAD);
+                generalHandler.sendEmptyMessage(START_SERVER_POLLING);
             }
         });
 
@@ -153,14 +161,19 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             driveRoot = new ARPlanElement(getApplicationContext(), "Drives", Color.YELLOW);
 
             for (DriveCollection driveCollection : driveCollections){
+
                 ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), driveCollection.getNameOfElement(), Color.RED);
                 arPlanElement.setUIName(driveCollection.getNameOfElement());
+
+                arPlanElement.createFlasherThread(generalHandler);
+
                 drivesList.add(arPlanElement);
                 cl.addView(arPlanElement.getView());
             }
 
             cl.addView(driveRoot.getView());
             showElements = true;
+            generalHandler.sendEmptyMessage(START_FLASHING);
 
         });
 
@@ -198,6 +211,19 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         element = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(2 * 7 + 1, 2 * 7 + 1),
                 new Point(7, 7));
+    }
+
+    private String getRequestFromUIPlan(ArrayList<ARPlanElement> drivesList) {
+
+        StringBuilder request = new StringBuilder();
+
+        for (ARPlanElement arPlanElement : drivesList){
+            request.append(arPlanElement.getUIName());
+            request.append(":");
+        }
+        String requestString = request.toString();
+
+        return requestString.substring(0, requestString.length() - 1);
     }
 
     @Override
@@ -328,14 +354,20 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     protected void onResume() {
 
-        networkEnquirerResponseHandler = new Handler(Looper.getMainLooper()){
+        generalHandler = new Handler(Looper.getMainLooper()){
             @Override
             public void handleMessage(Message msg){
+
                 switch (msg.what){
-                    case 0:
+
+                    case START_SERVER_POLLING:
+
                         networkEnquirerThread.start();
+
                     break;
-                    case 1:
+
+                    case SERVER_RESPONSE:
+
                         serverTextView.append("\n"+msg.obj);
 
                         String[] splittedLine = ((String) msg.obj).split(" ");
@@ -366,6 +398,31 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                         }
 
                         break;
+
+                    case START_FLASHING:
+
+                        drivesList.get(0).setWaitTime(800);
+                        drivesList.get(1).setWaitTime(10);
+                        drivesList.get(2).setWaitTime(400);
+
+                        for (ARPlanElement arPlanElement : drivesList){
+                            arPlanElement.getFlasherThread().start();
+                        }
+                        break;
+
+                    case ARELEMENT_BACKGROUND_COLOR_CHANGE:
+
+                        String[] flashInfo = msg.obj.toString().split(":");
+                        String arElementName = flashInfo[0];
+                        int arElementColor = Color.parseColor(flashInfo[1]);
+
+                        for (ARPlanElement arPlanElement : drivesList){
+                            if(arPlanElement.getUIName().equals(arElementName)){
+                                arPlanElement.setBackgroundColor(arElementColor);
+                            }
+                        }
+
+                        break;
                     default:
                         super.handleMessage(msg);
                 }
@@ -390,6 +447,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         if(cameraBridgeViewBase != null){
             cameraBridgeViewBase.disableView();
         }
+
+        networkEnquirerThread.interrupt();
+
         super.onDestroy();
     }
 
