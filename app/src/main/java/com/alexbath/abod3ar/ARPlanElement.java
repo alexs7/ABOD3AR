@@ -55,34 +55,51 @@ class ARPlanElement {
             @Override
             public void run() {
                 while(true){
-                    try {
-                        Thread.sleep(waitTime);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+
+                    if(waitTime == 0){
+
+                        continue;
+
+                    }else {
+                        try {
+                            Thread.sleep(waitTime);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                        message = new Message();
+                        message.what = ARELEMENT_BACKGROUND_COLOR_CHANGE;
+                        message.obj = getUIName() + ":" + "#0000ff";
+                        handler.sendMessage(message);
+
+                        try {
+                            Thread.sleep(waitTime);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                        message = new Message();
+                        message.what = ARELEMENT_BACKGROUND_COLOR_CHANGE;
+                        message.obj = getUIName() + ":" + "#2f4f4f";
+                        handler.sendMessage(message);
                     }
-
-                    message = new Message();
-                    message.what = ARELEMENT_BACKGROUND_COLOR_CHANGE;
-                    message.obj = getUIName() + ":" + "#0000ff";
-                    handler.sendMessage(message);
-
-                    //setBackgroundColor(Color.BLUE);
-
-                    try {
-                        Thread.sleep(waitTime);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-                    message = new Message();
-                    message.what = ARELEMENT_BACKGROUND_COLOR_CHANGE;
-                    message.obj = getUIName() + ":" + "#2f4f4f";
-                    handler.sendMessage(message);
-
-                    //setBackgroundColor(Color.parseColor("#2f4f4f"));
                 }
             }
         });
+    }
+
+    public void increaseFlashFrequency(){
+        waitTime -= 300;
+        if (waitTime < 0) {
+            waitTime = 0;
+        }
+    }
+
+    public void decreaseFlashFrequency(){
+        waitTime += 300;
+        if (waitTime > 900) {
+            waitTime = 900;
+        }
     }
 
     public void setWaitTime(int waitTime) {

@@ -383,16 +383,15 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                                     if(typeOfPlanElement.equals("D")){
                                         for (ARPlanElement drive : drivesList){
-//                                            if(drive.getUIName().equals(planElementName)){
-//                                                //increase flash/blink freq
-//                                                drive.setBackgroundColor(Color.BLUE);
-//                                            }else{
-//                                                //decrease flash/blink freq
-//                                                drive.setBackgroundColor(Color.parseColor("#2f4f4f"));
-//                                            }
+                                            if(drive.getUIName().equals(planElementName)){
+                                                //increase flash/blink freq
+                                                drive.increaseFlashFrequency();
+                                            }else{
+                                                //decrease flash/blink freq
+                                                drive.decreaseFlashFrequency();
+                                            }
                                         }
                                     }
-                                    //planElement.setToUpdate();
                                 }
                             }
                         }
@@ -400,10 +399,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                         break;
 
                     case START_FLASHING:
-
-                        drivesList.get(0).setWaitTime(800);
-                        drivesList.get(1).setWaitTime(10);
-                        drivesList.get(2).setWaitTime(400);
 
                         for (ARPlanElement arPlanElement : drivesList){
                             arPlanElement.getFlasherThread().start();
