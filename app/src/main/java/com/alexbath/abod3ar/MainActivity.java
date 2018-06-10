@@ -1,5 +1,8 @@
 package com.alexbath.abod3ar;
 
+import android.animation.Animator;
+import android.animation.ArgbEvaluator;
+import android.animation.ObjectAnimator;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -15,6 +18,7 @@ import android.view.MenuItem;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.Animation;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -173,8 +177,18 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
             cl.addView(driveRoot.getView());
             showElements = true;
-            generalHandler.sendEmptyMessage(START_FLASHING);
 
+//            ObjectAnimator animator = ObjectAnimator.ofInt(drivesList.get(0).getView(),"backgroundColor",
+//                    Color.parseColor("#0000ff"), Color.parseColor("#2f4f4f"),Color.parseColor("#0000ff"));
+//            animator.setDuration(100);
+//            animator.setEvaluator(new ArgbEvaluator());
+//            //animator.setRepeatMode(Animation.REVERSE);
+//            animator.setRepeatCount(Animation.INFINITE);
+//            animator.start();
+//            animator.setDuration(1000);
+
+
+            generalHandler.sendEmptyMessage(START_FLASHING);
         });
 
         cameraBridgeViewBase = (JavaCameraView) findViewById(R.id.openCVCameraView);
@@ -380,7 +394,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                             if (!isActionPatternElement(typeOfPlanElement)) { //We ignore ActionPatternELements as they are instinct only
                                 planElement = getPlanElement(typeOfPlanElement, planElement, planElementName);
                                 if (planElement != null) {
-
                                     if(typeOfPlanElement.equals("D")){
                                         for (ARPlanElement drive : drivesList){
                                             if(drive.getUIName().equals(planElementName)){

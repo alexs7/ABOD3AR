@@ -56,11 +56,7 @@ class ARPlanElement {
             public void run() {
                 while(true){
 
-                    if(waitTime == 0){
-
-                        continue;
-
-                    }else {
+                    if(waitTime > 0) {
                         try {
                             Thread.sleep(waitTime);
                         } catch (InterruptedException e) {
@@ -82,7 +78,14 @@ class ARPlanElement {
                         message.what = ARELEMENT_BACKGROUND_COLOR_CHANGE;
                         message.obj = getUIName() + ":" + "#2f4f4f";
                         handler.sendMessage(message);
+                    }else{
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
+
                 }
             }
         });
@@ -91,7 +94,7 @@ class ARPlanElement {
     public void increaseFlashFrequency(){
         waitTime -= 300;
         if (waitTime < 0) {
-            waitTime = 0;
+            waitTime = 50;
         }
     }
 
