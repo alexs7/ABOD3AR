@@ -48,6 +48,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
@@ -67,21 +68,23 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private int iAccumulator;
     private boolean drawCirclesDetection;
     private int robotIdx = 0;
-    private Thread networkEnquirerThread;
     private Handler generalHandler;
     private Thread uiFlasherThread;
     private Button connectToServerbutton;
     private Button loadPlanButton;
+    private Button testButton;
     private static final int START_SERVER_POLLING = 0;
     private static final int SERVER_RESPONSE = 1;
     private static final int START_FLASHING = 2;
     private static final int ARELEMENT_BACKGROUND_COLOR_CHANGE = 3;
+    private static final int DEFINE_SERVER_REQUEST = 4;
     private Point center;
     Mat element = null;
     private ARPlanElement driveRoot = null;
     private ArrayList<ARPlanElement> drivesList = null;
     private boolean showElements = false;
     private int nodeRadialOffset = 320;
+    private NetworkThread networkThread;
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -107,51 +110,22 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         serverTextView.setMovementMethod(new ScrollingMovementMethod());
         connectToServerbutton = findViewById(R.id.connect_server_button);
         loadPlanButton  = findViewById(R.id.load_plan_button);
+        testButton = findViewById(R.id.test_button);
 
-        networkEnquirerThread = new Thread(new Runnable() {
-
-            Socket socket = null;
-            PrintWriter out = null;
-            BufferedReader br = null;
-            String response = null;
-
-            @Override
-            public void run(){
-
-                try {
-                    socket = new Socket("192.168.178.21", 3001);
-                    out = new PrintWriter(socket.getOutputStream(), true);
-                    br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-                    while(true){
-                        try {
-                            Thread.sleep(50); //network is might be slow too!
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-
-                        String request = getRequestFromUIPlan(drivesList);
-
-                        //out.println("Request for Robot: "+robotIdx);
-                        out.println(request);
-                        response = br.readLine();
-                        if(!response.equals("doNothing")){
-                            Message message = new Message();
-                            message.what = SERVER_RESPONSE;
-                            message.obj = response;
-                            generalHandler.sendMessage(message);
-                        }
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        testButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                networkThread.stop();
             }
         });
 
         connectToServerbutton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                generalHandler.sendEmptyMessage(START_SERVER_POLLING);
+                if(drivesList != null) {
+                    generalHandler.sendEmptyMessage(DEFINE_SERVER_REQUEST);
+                    generalHandler.sendEmptyMessage(START_SERVER_POLLING);
+                }else {
+                    statusTextView.append("\n Load a Plan first!");
+                }
             }
         });
 
@@ -186,7 +160,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 //            animator.setRepeatCount(Animation.INFINITE);
 //            animator.start();
 //            animator.setDuration(1000);
-
 
             generalHandler.sendEmptyMessage(START_FLASHING);
         });
@@ -225,19 +198,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         element = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(2 * 7 + 1, 2 * 7 + 1),
                 new Point(7, 7));
-    }
-
-    private String getRequestFromUIPlan(ArrayList<ARPlanElement> drivesList) {
-
-        StringBuilder request = new StringBuilder();
-
-        for (ARPlanElement arPlanElement : drivesList){
-            request.append(arPlanElement.getUIName());
-            request.append(":");
-        }
-        String requestString = request.toString();
-
-        return requestString.substring(0, requestString.length() - 1);
     }
 
     @Override
@@ -347,8 +307,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                     drivesList.get(k).getView().setY(Math.round(yV));
 
                     Imgproc.line(frame, center,
-                                 new Point(xV + drivesList.get(k).getView().getWidth()/2,yV + drivesList.get(k).getView().getHeight()/2),
-                                 new Scalar(255,255,255),3);
+                                 new Point(xV + drivesList.get(k).getView().getWidth()/2,
+                                            yV + drivesList.get(k).getView().getHeight()/2),
+                                                new Scalar(255,255,255),3);
                 }
             }
         }
@@ -373,13 +334,16 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             public void handleMessage(Message msg){
 
                 switch (msg.what){
+                    case DEFINE_SERVER_REQUEST:
 
+                        networkThread.setRequest(drivesList);
+
+                        break;
                     case START_SERVER_POLLING:
 
-                        networkEnquirerThread.start();
+                        networkThread.start();
 
-                    break;
-
+                        break;
                     case SERVER_RESPONSE:
 
                         serverTextView.append("\n"+msg.obj);
@@ -437,6 +401,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             }
         };
 
+        networkThread = new NetworkThread(50,generalHandler,"138.38.98.44", 3001);
+
         if(!OpenCVLoader.initDebug()){
             Log.d(OPENCVTAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, baseLoaderCallback);
@@ -450,13 +416,20 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     @Override
+    protected void onStop() {
+
+        networkThread.stop();
+        generalHandler.removeCallbacksAndMessages(null);
+
+        super.onStop();
+    }
+
+    @Override
     protected void onDestroy() {
 
         if(cameraBridgeViewBase != null){
             cameraBridgeViewBase.disableView();
         }
-
-        networkEnquirerThread.interrupt();
 
         super.onDestroy();
     }
