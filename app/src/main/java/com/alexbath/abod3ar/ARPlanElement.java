@@ -99,7 +99,7 @@ class ARPlanElement {
     }
 
     public void decreaseFlashFrequency(){
-        waitTime += 300;
+        waitTime += 50;
         if (waitTime > 900) {
             waitTime = 900;
         }
