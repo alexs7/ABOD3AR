@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/openCVCameraView"
-        app:show_fps="false"/>
+        app:show_fps="true"/>
 
     <TextView
         android:id="@+id/status_text"
