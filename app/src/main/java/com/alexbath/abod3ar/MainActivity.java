@@ -147,6 +147,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                 drivesList.add(arPlanElement);
                 cl.addView(arPlanElement.getView());
+
+                arPlanElement.getView().setOnClickListener(new View.OnClickListener() {
+                    ARPlanElement arPlanElementListener = arPlanElement;
+                    public void onClick(View v) {
+                        statusTextView.append("\n "+arPlanElementListener.getUIName());
+                    }
+                });
             }
 
             cl.addView(driveRoot.getView());
@@ -378,7 +385,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                     case START_FLASHING:
 
                         for (ARPlanElement arPlanElement : drivesList){
-                            arPlanElement.getFlasherThread().start();
+                            arPlanElement.startFlasherThread();
                         }
                         break;
 
@@ -401,7 +408,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             }
         };
 
-        networkThread = new NetworkThread(50,generalHandler,"138.38.98.44", 3001);
+        networkThread = new NetworkThread(50,generalHandler,"138.38.99.72", 3001);
 
         if(!OpenCVLoader.initDebug()){
             Log.d(OPENCVTAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");

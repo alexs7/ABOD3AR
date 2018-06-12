@@ -11,6 +11,7 @@ import android.widget.TextView;
 import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
 
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class ARPlanElement {
 
@@ -20,12 +21,14 @@ class ARPlanElement {
     private Thread flasherThread;
     private int waitTime = 0;
     private static final int ARELEMENT_BACKGROUND_COLOR_CHANGE = 3;
+    private final AtomicBoolean running;
 
     public ARPlanElement(Context applicationContext, String text, int borderColor){
         element = (TextView) View.inflate(applicationContext, R.layout.plan_element, null);
         element.setText(text);
         drawable = (GradientDrawable) element.getBackground();
         drawable.setStroke(2, borderColor);
+        this.running = new AtomicBoolean(true);
     }
 
     public View getView() {
@@ -44,8 +47,12 @@ class ARPlanElement {
         return uIName;
     }
 
-    public Thread getFlasherThread() {
-        return flasherThread;
+    public void startFlasherThread() {
+        flasherThread.start();
+    }
+
+    public void stopFlasherThread() {
+        running.set(false);
     }
 
     public void createFlasherThread(Handler handler) {
@@ -54,7 +61,7 @@ class ARPlanElement {
             Message message = null;
             @Override
             public void run() {
-                while(true){
+                while(running.get()){
 
                     if(waitTime > 0) {
                         try {
