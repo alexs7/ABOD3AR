@@ -255,56 +255,56 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         frame = inputFrame.rgba();
 
-//        Imgproc.cvtColor(frame,frameHSV,Imgproc.COLOR_BGR2HSV);
-//        Core.inRange(frameHSV,lower,upper,thresh);
-//
-//        Imgproc.erode(thresh, eroded,element);
-//        Imgproc.dilate(eroded, dilated,element);
-//
-//        //returns single channel image!
-//        Imgproc.GaussianBlur(dilated, blurred, new Size(7, 7), 3, 3 );
-//
-//        Imgproc.HoughCircles(blurred, circles, Imgproc.CV_HOUGH_GRADIENT,2.0,
-//                blurred.rows() / 8, iCannyUpperThreshold, iAccumulator, iMinRadius, iMaxRadius);
-//
-//        if(circles.cols() == 1 ){
-//
-//            int i = 0;
-//            //circlesDetails[0]=x, 1=y, 2=radius
-//            double circlesDetails[] = circles.get(0, 0);
-//
-//            double circleX = Math.round(circlesDetails[0]);
-//            double circleY = Math.round(circlesDetails[1]);
-//            int radius = (int) Math.round(circlesDetails[2]);
-//
-//            center = new Point(circleX,circleY);
-//
-//            if(drawCirclesDetection){
-//                Imgproc.circle(frame, center,2, new Scalar(0,0,255), -1, 8, 0 );
-//                Imgproc.circle( frame, center, radius, new Scalar(0,0,255), 3, 8, 0 );
-//            }
-//
-//            if(showElements){
-//
-//                driveRoot.getView().setX((float) (circleX - driveRoot.getView().getWidth()/2));
-//                driveRoot.getView().setY((float) (circleY - driveRoot.getView().getHeight()/2));
-//
-//                for(int k = 0; k<drivesList.size(); k++){
-//
-//                    //TODO: 4 should be drivesList.size()!
-//                    float xV = (float) (circleX + nodeRadialOffset * Math.cos(Math.PI / 4 * (k + 1)));
-//                    float yV = (float) (circleY + nodeRadialOffset * Math.sin(Math.PI / 4 * (k + 1)));
-//
-//                    drivesList.get(k).getView().setX(Math.round(xV));
-//                    drivesList.get(k).getView().setY(Math.round(yV));
-//
-//                    Imgproc.line(frame, center,
-//                                 new Point(xV + drivesList.get(k).getView().getWidth()/2,
-//                                            yV + drivesList.get(k).getView().getHeight()/2),
-//                                                new Scalar(255,255,255),3);
-//                }
-//            }
-//        }
+        Imgproc.cvtColor(frame,frameHSV,Imgproc.COLOR_BGR2HSV);
+        Core.inRange(frameHSV,lower,upper,thresh);
+
+        Imgproc.erode(thresh, eroded,element);
+        Imgproc.dilate(eroded, dilated,element);
+
+        //returns single channel image!
+        Imgproc.GaussianBlur(dilated, blurred, new Size(7, 7), 3, 3 );
+
+        Imgproc.HoughCircles(blurred, circles, Imgproc.CV_HOUGH_GRADIENT,2.0,
+                blurred.rows() / 8, iCannyUpperThreshold, iAccumulator, iMinRadius, iMaxRadius);
+
+        if(circles.cols() == 1 ){
+
+            int i = 0;
+            //circlesDetails[0]=x, 1=y, 2=radius
+            double circlesDetails[] = circles.get(0, 0);
+
+            double circleX = Math.round(circlesDetails[0]);
+            double circleY = Math.round(circlesDetails[1]);
+            int radius = (int) Math.round(circlesDetails[2]);
+
+            center = new Point(circleX,circleY);
+
+            if(drawCirclesDetection){
+                Imgproc.circle(frame, center,2, new Scalar(0,0,255), -1, 8, 0 );
+                Imgproc.circle( frame, center, radius, new Scalar(0,0,255), 3, 8, 0 );
+            }
+
+            if(showElements){
+
+                driveRoot.getView().setX((float) (circleX - driveRoot.getView().getWidth()/2));
+                driveRoot.getView().setY((float) (circleY - driveRoot.getView().getHeight()/2));
+
+                for(int k = 0; k<drivesList.size(); k++){
+
+                    //TODO: 4 should be drivesList.size()!
+                    float xV = (float) (circleX + nodeRadialOffset * Math.cos(Math.PI / 4 * (k + 1)));
+                    float yV = (float) (circleY + nodeRadialOffset * Math.sin(Math.PI / 4 * (k + 1)));
+
+                    drivesList.get(k).getView().setX(Math.round(xV));
+                    drivesList.get(k).getView().setY(Math.round(yV));
+
+                    Imgproc.line(frame, center,
+                                 new Point(xV + drivesList.get(k).getView().getWidth()/2,
+                                            yV + drivesList.get(k).getView().getHeight()/2),
+                                                new Scalar(255,255,255),3);
+                }
+            }
+        }
 
         return frame;
     }
