@@ -4,6 +4,8 @@ import android.animation.Animator;
 import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,6 +35,7 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.JavaCameraView;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -55,7 +58,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private static final String OPENCVTAG = "OpenCVCamera";
     private static final String SERVERTAG = "SERVER";
     private CameraBridgeViewBase cameraBridgeViewBase;
-    private Mat frame,frameHSV,thresh, eroded, dilated,blurred;
+    private Mat frame,frameHSV,thresh, eroded, dilated,blurred,marker;
     private BaseLoaderCallback baseLoaderCallback;
     private TextView statusTextView;
     private TextView serverTextView;
@@ -195,6 +198,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         // Example of a call to a native method
         //tv.setText(stringFromJNI());
 
+        // TODO: Run any OPENCV code after this part!!!
+
         if(OpenCVLoader.initDebug()){
             statusTextView.setText("OpenCV Loaded!");
             Log.d(OPENCVTAG, "OpenCV Loaded!");
@@ -205,6 +210,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         element = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(2 * 7 + 1, 2 * 7 + 1),
                 new Point(7, 7));
+
+        //marker = Imgcodecs.imread("markers/marker1.png");
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.marker1);
+        marker = new Mat();
+        Utils.bitmapToMat(bitmap, marker);
+
     }
 
     @Override
@@ -263,6 +274,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         eroded.release();
         dilated.release();
         blurred.release();
+        marker.release();
     }
 
     @Override
