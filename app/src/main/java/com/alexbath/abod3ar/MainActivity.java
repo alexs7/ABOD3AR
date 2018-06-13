@@ -92,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     // Used to load the 'native-lib' library on application startup.
     static {
         System.loadLibrary("native-lib");
+        System.loadLibrary("opencv_java3");
     }
 
     @Override
@@ -204,10 +205,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             }
         };
 
-
-        // Example of a call to a native method
-        //tv.setText(stringFromJNI());
-
         element = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(2 * 7 + 1, 2 * 7 + 1),
                 new Point(7, 7));
 
@@ -262,7 +259,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Imgproc.dilate(eroded, dilated,element);
 
         //returns single channel image!
-        Imgproc.GaussianBlur(dilated, blurred, new Size(7, 7), 3, 3 );
+        gaussianBlur(dilated.getNativeObjAddr(),blurred.getNativeObjAddr());
+        //Imgproc.GaussianBlur(dilated, blurred, new Size(7, 7), 3, 3 );
 
         Imgproc.HoughCircles(blurred, circles, Imgproc.CV_HOUGH_GRADIENT,2.0,
                 blurred.rows() / 8, iCannyUpperThreshold, iAccumulator, iMinRadius, iMaxRadius);
@@ -406,6 +404,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         super.onResume();
     }
+
+    private native void gaussianBlur(long source, long target);
 
     @Override
     protected void onStop() {
