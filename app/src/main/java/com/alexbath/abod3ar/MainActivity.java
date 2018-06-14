@@ -69,12 +69,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private static final int START_FLASHING = 2;
     private static final int ARELEMENT_BACKGROUND_COLOR_CHANGE = 3;
     private static final int DEFINE_SERVER_REQUEST = 4;
+    private static final int HIDE_ARPLANELEMENTS = 6;
+    private static final int SHOW_ARPLANELEMENTS = 7;
     private Point center;
     Mat element = null;
     private ARPlanElement driveRoot = null;
     private ArrayList<ARPlanElement> drivesList = null;
     private boolean showElements = false;
-    private int nodeRadialOffset = 320;
+    private int nodeRadialOffset = 260;
     private NetworkThread networkThread;
 
     // Used to load the 'native-lib' library on application startup.
@@ -122,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         });
 
         loadPlanButton.setOnClickListener(v -> {
-            String fileName = "plans/DiaPlan3.inst";
+            String fileName = "plans/Plan6.inst";
             List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
 
             ConstraintLayout cl = findViewById(R.id.coordinatorLayout);
@@ -164,7 +166,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         });
 
         // TODO: Run any OPENCV code after this part!!!
-
+        // also read this: https://docs.opencv.org/2.4/platforms/android/service/doc/JavaHelper.html#boolean-initdebug
         if(OpenCVLoader.initDebug()){
             statusTextView.setText("OpenCV Loaded!");
             Log.d(OPENCVTAG, "OpenCV Loaded!");
@@ -271,6 +273,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
             center = new Point(circleX,circleY);
 
+//            if(circleX == 0.0 && circleY == 0.0){
+//                generalHandler.sendEmptyMessage(HIDE_ARPLANELEMENTS);
+//                return frame;
+//            }else{
+//                generalHandler.sendEmptyMessage(SHOW_ARPLANELEMENTS);
+//            }
+
             if(drawCirclesDetection){
                 Imgproc.circle(frame, center,2, new Scalar(0,0,255), -1, 8, 0 );
                 Imgproc.circle( frame, center, radius, new Scalar(0,0,255), 3, 8, 0 );
@@ -284,15 +293,15 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 for(int k = 0; k<drivesList.size(); k++){
 
                     //TODO: 4 should be drivesList.size()!
-                    float xV = (float) (circleX + nodeRadialOffset * Math.cos(Math.PI / 4 * (k + 1)));
-                    float yV = (float) (circleY + nodeRadialOffset * Math.sin(Math.PI / 4 * (k + 1)));
+                    float xV = (float) (circleX + nodeRadialOffset * Math.cos(Math.PI / drivesList.size() * (2*k + 1)));
+                    float yV = (float) (circleY + nodeRadialOffset * Math.sin(Math.PI / drivesList.size() * (2*k + 1)));
 
                     drivesList.get(k).getView().setX(Math.round(xV));
                     drivesList.get(k).getView().setY(Math.round(yV));
 
                     Imgproc.line(frame, center,
-                                 new Point(xV + drivesList.get(k).getView().getWidth()/2,
-                                            yV + drivesList.get(k).getView().getHeight()/2),
+                                 new Point(xV, // + drivesList.get(k).getView().getWidth()/2,
+                                            yV), // + drivesList.get(k).getView().getHeight()/2),
                                                 new Scalar(255,255,255),3);
                 }
             }
@@ -389,13 +398,38 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                         }
 
                         break;
+
+                    case HIDE_ARPLANELEMENTS:
+
+                        if(driveRoot != null && drivesList != null) {
+
+                            driveRoot.getView().setVisibility(View.INVISIBLE);
+
+                            for (ARPlanElement arPlanElement : drivesList) {
+                                arPlanElement.getView().setVisibility(View.INVISIBLE);
+                            }
+                        }
+                        break;
+
+                    case SHOW_ARPLANELEMENTS:
+
+                        if(driveRoot != null && drivesList != null) {
+
+                            driveRoot.getView().setVisibility(View.VISIBLE);
+
+                            for (ARPlanElement arPlanElement : drivesList) {
+                                arPlanElement.getView().setVisibility(View.VISIBLE);
+                            }
+                        }
+                        break;
+
                     default:
                         super.handleMessage(msg);
                 }
             }
         };
 
-        networkThread = new NetworkThread(50,generalHandler,"138.38.99.72", 3001);
+        networkThread = new NetworkThread(50,generalHandler,"192.168.0.100", 3001);
 
         if(!OpenCVLoader.initDebug()){
             Log.d(OPENCVTAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
