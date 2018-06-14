@@ -1,8 +1,5 @@
 package com.alexbath.abod3ar;
 
-import android.animation.Animator;
-import android.animation.ArgbEvaluator;
-import android.animation.ObjectAnimator;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -15,12 +12,9 @@ import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.animation.Animation;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,21 +38,15 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
     private static final String OPENCVTAG = "OpenCVCamera";
     private static final String SERVERTAG = "SERVER";
     private CameraBridgeViewBase cameraBridgeViewBase;
-    private Mat frame,frameHSV,thresh, eroded, dilated,blurred,marker;
+    private Mat frame,frameHSV,thresh, eroded, dilated,blurred,marker, markerResized,output;
     private BaseLoaderCallback baseLoaderCallback;
     private TextView statusTextView;
     private TextView serverTextView;
@@ -211,8 +199,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         //marker = Imgcodecs.imread("markers/marker1.png");
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.marker1);
         marker = new Mat();
+        markerResized = new Mat();
         Utils.bitmapToMat(bitmap, marker);
-
+        Size sz = new Size(150,150);
+        Imgproc.resize( marker, markerResized, sz );
+        Imgproc.cvtColor(markerResized, marker,Imgproc.COLOR_RGB2GRAY);
     }
     
 
@@ -224,6 +215,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         eroded = new Mat(width,height, CvType.CV_8UC4);
         dilated = new Mat(width,height, CvType.CV_8UC4);
         blurred = new Mat(width,height, CvType.CV_8UC4);
+        output = new Mat(width,height, CvType.CV_8UC4);
         lower = new Scalar(29, 86, 6);
         upper = new Scalar(64, 255, 255);
 
@@ -245,6 +237,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         dilated.release();
         blurred.release();
         marker.release();
+        markerResized.release();
+        output.release();
     }
 
     @Override
@@ -305,7 +299,17 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }
 
         return frame;
+
+//        TODO: MARKER detection part
+//        frame = inputFrame.gray();
+//
+//        detector(markerResized.getNativeObjAddr(), frame.getNativeObjAddr());
+//
+//        return frame;
     }
+
+    private native void detector(long source, long target);
+    private native void gaussianBlur(long source, long target);
 
     @Override
     protected void onPause() {
@@ -404,8 +408,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         super.onResume();
     }
-
-    private native void gaussianBlur(long source, long target);
 
     @Override
     protected void onStop() {
