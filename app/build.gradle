@@ -34,6 +34,13 @@ android {
     }
 }
 
+// conflicts with a Android stuff
+configurations {
+    all*.exclude group: "xmlpull", module: "xmlpull"
+    all*.exclude group: "org.apache.commons", module: "commons-compress"
+    all*.exclude group: "com.thoughtworks.xstream", module: "commons-compress"
+}
+
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:27.1.1'
@@ -43,4 +50,8 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation project(':openCVLibrary341')
+    ['boofcv-android', 'boofcv-core'].each {
+        String a ->
+            implementation group: 'org.boofcv', name: a, version: '0.30'
+    }
 }
