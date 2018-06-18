@@ -6,12 +6,26 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.support.constraint.ConstraintLayout;
+import android.text.method.ScrollingMovementMethod;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.recklesscoding.abode.core.plan.Plan;
+import com.recklesscoding.abode.core.plan.planelements.PlanElement;
+import com.recklesscoding.abode.core.plan.planelements.action.ActionEvent;
+import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import boofcv.abst.tracker.ConfigComaniciu2003;
 import boofcv.abst.tracker.ConfigTld;
@@ -42,9 +56,26 @@ public class ObjectTrackerActivity extends Camera2Activity
     // size of the minimum square which the user can select
     private final static int MINIMUM_MOTION = 20;
 
-    private  Point2D_I32 click0 = new Point2D_I32();
+    private Point2D_I32 click0 = new Point2D_I32();
     private Point2D_I32 click1 = new Point2D_I32();
     private FrameLayout surfaceLayout;
+    private Button connectToServerbutton;
+    private Button loadPlanButton;
+    private TextView statusTextView;
+    private TextView serverTextView;
+    private Button reset_button;
+    private ArrayList<ARPlanElement> drivesList = null;
+    private ARPlanElement driveRoot = null;
+    private boolean showElements = false;
+    private static final int START_SERVER_POLLING = 0;
+    private static final int SERVER_RESPONSE = 1;
+    private static final int START_FLASHING = 2;
+    private static final int ARELEMENT_BACKGROUND_COLOR_CHANGE = 3;
+    private static final int DEFINE_SERVER_REQUEST = 4;
+    private static final int HIDE_ARPLANELEMENTS = 6;
+    private static final int SHOW_ARPLANELEMENTS = 7;
+    private NetworkThread networkThread;
+    private Handler generalHandler;
 
     public enum TrackerType { // TODO: add the others later
         CIRCULANT,MEAN_SHIFT_LIKELIHOOD
@@ -64,17 +95,161 @@ public class ObjectTrackerActivity extends Camera2Activity
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
+        createGeneralHandler();
+        createNetworkThread();
+
         surfaceLayout = findViewById(R.id.camera_frame_layout);
+        statusTextView = (TextView) findViewById(R.id.status_text);
+        serverTextView = (TextView) findViewById(R.id.server_response);
+        serverTextView.setMovementMethod(new ScrollingMovementMethod());
+        connectToServerbutton = findViewById(R.id.connect_server_button);
+        loadPlanButton  = findViewById(R.id.load_plan_button);
         startCamera(surfaceLayout,null);
         displayView.setOnTouchListener(this);
 
-        Button button = findViewById(R.id.button);
-        button.setOnClickListener(new View.OnClickListener() {
+        reset_button = findViewById(R.id.reset_button);
+        reset_button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 resetPressed();
             }
         });
 
+        loadPlanButton.setOnClickListener(v -> {
+            String fileName = "plans/Plan6.inst";
+            List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
+
+            ConstraintLayout cl = findViewById(R.id.root_layout);
+            drivesList = new ArrayList<>();
+
+            driveRoot = new ARPlanElement(getApplicationContext(), "Drives", Color.YELLOW);
+
+            for (DriveCollection driveCollection : driveCollections){
+
+                ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), driveCollection.getNameOfElement(), Color.RED);
+                arPlanElement.setUIName(driveCollection.getNameOfElement());
+
+                arPlanElement.createFlasherThread(generalHandler);
+
+                drivesList.add(arPlanElement);
+                cl.addView(arPlanElement.getView());
+
+                arPlanElement.getView().setOnClickListener(new View.OnClickListener() {
+                    ARPlanElement arPlanElementListener = arPlanElement;
+                    public void onClick(View v) {
+                        statusTextView.append("\n "+arPlanElementListener.getUIName());
+                    }
+                });
+            }
+
+            cl.addView(driveRoot.getView());
+            showElements = true;
+
+            generalHandler.sendEmptyMessage(START_FLASHING);
+        });
+
+    }
+
+    private void createNetworkThread() {
+        networkThread = new NetworkThread(50,generalHandler,"192.168.0.100", 3001);
+    }
+
+    private void createGeneralHandler() {
+        generalHandler = new Handler(Looper.getMainLooper()){
+            @Override
+            public void handleMessage(Message msg){
+
+                switch (msg.what){
+                    case DEFINE_SERVER_REQUEST:
+
+                        networkThread.setRequest(drivesList);
+
+                        break;
+                    case START_SERVER_POLLING:
+
+                        networkThread.start();
+
+                        break;
+                    case SERVER_RESPONSE:
+
+                        serverTextView.append("\n"+msg.obj);
+
+                        String[] splittedLine = ((String) msg.obj).split(" ");
+                        PlanElement planElement = null;
+                        String typeOfPlanElement;
+                        String planElementName = splittedLine[3];
+
+                        if (isValidLine(splittedLine)) {
+                            typeOfPlanElement = splittedLine[2];
+                            if (!isActionPatternElement(typeOfPlanElement)) { //We ignore ActionPatternELements as they are instinct only
+                                planElement = getPlanElement(typeOfPlanElement, planElement, planElementName);
+                                if (planElement != null) {
+                                    if(typeOfPlanElement.equals("D")){
+                                        for (ARPlanElement drive : drivesList){
+                                            if(drive.getUIName().equals(planElementName)){
+                                                //increase flash/blink freq
+                                                drive.increaseFlashFrequency();
+                                            }else{
+                                                //decrease flash/blink freq
+                                                drive.decreaseFlashFrequency();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        break;
+
+                    case START_FLASHING:
+
+                        for (ARPlanElement arPlanElement : drivesList){
+                            arPlanElement.startFlasherThread();
+                        }
+                        break;
+
+                    case ARELEMENT_BACKGROUND_COLOR_CHANGE:
+
+                        String[] flashInfo = msg.obj.toString().split(":");
+                        String arElementName = flashInfo[0];
+                        int arElementColor = Color.parseColor(flashInfo[1]);
+
+                        for (ARPlanElement arPlanElement : drivesList){
+                            if(arPlanElement.getUIName().equals(arElementName)){
+                                arPlanElement.setBackgroundColor(arElementColor);
+                            }
+                        }
+
+                        break;
+
+                    case HIDE_ARPLANELEMENTS:
+
+                        if(driveRoot != null && drivesList != null) {
+
+                            driveRoot.getView().setVisibility(View.INVISIBLE);
+
+                            for (ARPlanElement arPlanElement : drivesList) {
+                                arPlanElement.getView().setVisibility(View.INVISIBLE);
+                            }
+                        }
+                        break;
+
+                    case SHOW_ARPLANELEMENTS:
+
+                        if(driveRoot != null && drivesList != null) {
+
+                            driveRoot.getView().setVisibility(View.VISIBLE);
+
+                            for (ARPlanElement arPlanElement : drivesList) {
+                                arPlanElement.getView().setVisibility(View.VISIBLE);
+                            }
+                        }
+                        break;
+
+                    default:
+                        super.handleMessage(msg);
+                }
+            }
+        };
     }
 
     @Override
@@ -162,6 +337,7 @@ public class ObjectTrackerActivity extends Camera2Activity
         boolean visible;
 
         Quadrilateral_F64 location = new Quadrilateral_F64();
+        Point2D_F64 center = new Point2D_F64();
 
         Paint paintSelected = new Paint();
         Paint paintLine0 = new Paint();
@@ -193,11 +369,8 @@ public class ObjectTrackerActivity extends Camera2Activity
             canvas.drawLine((float)a.x,(float)a.y,(float)b.x,(float)b.y,color);
         }
 
-        private void drawCenter(Canvas canvas, Point2D_F64 a, Point2D_F64 c, Paint color ) {
-            float centerX = (float) (c.x + a.x)/2;
-            float centerY = (float) (c.y + a.y)/2;
-
-            canvas.drawPoint(centerX,centerY, paintLine0);
+        private void drawCenter(Canvas canvas, Point2D_F64 center, Paint color ) {
+            canvas.drawPoint((float)center.x,(float)center.y, color);
         }
 
         private void makeInBounds( Point2D_F64 p ) {
@@ -280,7 +453,8 @@ public class ObjectTrackerActivity extends Camera2Activity
                 if( visible ) {
                     Quadrilateral_F64 q = location;
 
-                    drawCenter(canvas,q.a,q.c,paintLine0);
+                    updateCenter();
+                    drawCenter(canvas,center,paintLine1);
 
                     drawLine(canvas,q.a,q.b,paintLine0);
                     drawLine(canvas,q.b,q.c,paintLine1);
@@ -292,6 +466,11 @@ public class ObjectTrackerActivity extends Camera2Activity
             }
         }
 
+        private void updateCenter() {
+            center.x = (location.c.x + location.a.x)/2;
+            center.y = (location.c.y + location.a.y)/2;
+        }
+
         @Override
         public void process(ImageBase input) {
             if( mode == 3 ) {
@@ -301,9 +480,77 @@ public class ObjectTrackerActivity extends Camera2Activity
             } else if( mode == 4 ) {
                 //surfaceLayout.setVisibility(View.INVISIBLE);
                 visible = tracker.process(input,location);
-                System.out.println(location);
+
+                if(showElements){
+                    driveRoot.getView().setX((float) (center.x - driveRoot.getView().getWidth()/2));
+                    driveRoot.getView().setY((float) (center.y - driveRoot.getView().getHeight()/2));
+
+                    for(int k = 0; k<drivesList.size(); k++){
+
+                        //TODO: 4 should be drivesList.size()!
+                        float xV = (float) (center.x + 260 * Math.cos(Math.PI / drivesList.size() * (2*k + 1)));
+                        float yV = (float) (center.y + 260 * Math.sin(Math.PI / drivesList.size() * (2*k + 1)));
+
+                        drivesList.get(k).getView().setX(Math.round(xV));
+                        drivesList.get(k).getView().setY(Math.round(yV));
+
+//                        Imgproc.line(frame, center,
+//                                new Point(xV, // + drivesList.get(k).getView().getWidth()/2,
+//                                        yV), // + drivesList.get(k).getView().getHeight()/2),
+//                                new Scalar(255,255,255),3);
+                    }
+                }
             }
         }
+    }
+
+    private boolean isValidLine(String[] splittedLine) {
+        return !splittedLine[0].startsWith("*") && splittedLine.length >= 4;
+    }
+
+    private boolean isActionPatternElement(String typeOfPlanElement) {
+        return typeOfPlanElement.startsWith("APE");
+    }
+
+    private boolean isActionPattern(String typeOfPlanElement) {
+        return typeOfPlanElement.equals("AP");
+    }
+
+    private boolean isAction(String typeOfPlanElement) {
+        return typeOfPlanElement.equals("A");
+    }
+
+    private boolean isCompetence(String typeOfPlanElement) {
+        return typeOfPlanElement.equals("C");
+    }
+
+    private boolean isCompetenceElement(String typeOfPlanElement) {
+        return typeOfPlanElement.equals("CE");
+    }
+
+    private boolean isDrive(String typeOfPlanElement) {
+        return typeOfPlanElement.equals("D");
+    }
+
+    private PlanElement getPlanElement(String typeOfPlanElement, PlanElement planElement, String planElementName) {
+        if (isAction(typeOfPlanElement)) {
+            planElement = Plan.getInstance().findAction(planElementName);
+            if (planElement == null) {
+                planElement = new ActionEvent(planElementName);
+            }
+        } else if (isActionPattern(typeOfPlanElement)) {
+            planElement = Plan.getInstance().findActionPattern(planElementName);
+            if (planElement == null) {
+                planElement = new ActionEvent(planElementName);
+            }
+        } else if (isCompetence(typeOfPlanElement)) {
+            planElement = Plan.getInstance().findCompetence(planElementName);
+        } else if (isCompetenceElement(typeOfPlanElement)) {
+            planElement = Plan.getInstance().findCompetenceElement(planElementName);
+        } else if (isDrive(typeOfPlanElement)) {
+            planElement = Plan.getInstance().findDriveCollection(planElementName);
+        }
+        return planElement;
     }
 
 }
