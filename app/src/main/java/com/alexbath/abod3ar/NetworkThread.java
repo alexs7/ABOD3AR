@@ -70,6 +70,11 @@ public class NetworkThread implements Runnable {
                     message.what = SERVER_RESPONSE;
                     message.obj = response;
                     handler.sendMessage(message);
+                }else if(response.equals("No Robot Connected to Server!")){
+                    Message message = new Message();
+                    message.what = SERVER_RESPONSE;
+                    message.obj = response;
+                    handler.sendMessage(message);
                 }
             }
 

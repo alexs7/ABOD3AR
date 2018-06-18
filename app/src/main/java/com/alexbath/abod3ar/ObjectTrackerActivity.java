@@ -114,6 +114,17 @@ public class ObjectTrackerActivity extends Camera2Activity
             }
         });
 
+        connectToServerbutton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if(drivesList != null) {
+                    generalHandler.sendEmptyMessage(DEFINE_SERVER_REQUEST);
+                    generalHandler.sendEmptyMessage(START_SERVER_POLLING);
+                }else {
+                    statusTextView.append("\n Load a Plan first!");
+                }
+            }
+        });
+
         loadPlanButton.setOnClickListener(v -> {
             String fileName = "plans/Plan6.inst";
             List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
@@ -150,7 +161,7 @@ public class ObjectTrackerActivity extends Camera2Activity
     }
 
     private void createNetworkThread() {
-        networkThread = new NetworkThread(50,generalHandler,"192.168.0.100", 3001);
+        networkThread = new NetworkThread(50,generalHandler,"192.168.0.101", 3001);
     }
 
     private void createGeneralHandler() {
