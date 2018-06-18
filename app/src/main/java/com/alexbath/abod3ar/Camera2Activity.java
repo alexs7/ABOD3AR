@@ -36,7 +36,7 @@ import georegression.struct.point.Point2D_F64;
  * useful variables and methods
  * visualizationPending
  */
-public abstract class DemoCamera2Activity extends VisualizeCamera2Activity {
+public abstract class Camera2Activity extends VisualizeCamera2Activity {
 
     private static final String TAG = "DemoCamera2";
 
@@ -87,7 +87,7 @@ public abstract class DemoCamera2Activity extends VisualizeCamera2Activity {
     private final Matrix tempMatrix = new Matrix();
 
 
-    public DemoCamera2Activity(Resolution resolution) {
+    public Camera2Activity(Resolution resolution) {
         super.targetResolution = resolutionToPixels(resolution);
 
         super.showBitmap = true;
@@ -357,7 +357,9 @@ public abstract class DemoCamera2Activity extends VisualizeCamera2Activity {
                 return 1024*768;
 
             case MAX:
-                //return Integer.MAX_VALUE;
+                return Integer.MAX_VALUE;
+
+            case R1920x1080:
                 return 1920*1080;
 
             default:
@@ -371,6 +373,6 @@ public abstract class DemoCamera2Activity extends VisualizeCamera2Activity {
      * resolution should choose a relative one.
      */
     public enum Resolution {
-        LOW,MEDIUM,HIGH,MAX,R320x240,R640x480;
+        LOW,MEDIUM,HIGH,MAX,R320x240,R640x480,R1920x1080;
     }
 }

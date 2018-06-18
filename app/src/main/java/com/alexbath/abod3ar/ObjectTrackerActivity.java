@@ -6,15 +6,11 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import boofcv.abst.tracker.ConfigComaniciu2003;
@@ -30,27 +26,32 @@ import georegression.struct.point.Point2D_F64;
 import georegression.struct.point.Point2D_I32;
 import georegression.struct.shapes.Quadrilateral_F64;
 
+import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.CIRCULANT;
+
 /**
  * Allow the user to select an object in the image and then track it
  *
  * @author Peter Abeles
  */
-public class ObjectTrackerActivity extends DemoCamera2Activity
-        implements AdapterView.OnItemSelectedListener, View.OnTouchListener
+public class ObjectTrackerActivity extends Camera2Activity
+        implements View.OnTouchListener
 {
 
-    Spinner spinnerView;
-
-    int mode = 0;
+    private int mode = 0;
 
     // size of the minimum square which the user can select
-    final static int MINIMUM_MOTION = 20;
+    private final static int MINIMUM_MOTION = 20;
 
-    Point2D_I32 click0 = new Point2D_I32();
-    Point2D_I32 click1 = new Point2D_I32();
+    private  Point2D_I32 click0 = new Point2D_I32();
+    private Point2D_I32 click1 = new Point2D_I32();
+    private FrameLayout surfaceLayout;
+
+    public enum TrackerType { // TODO: add the others later
+        CIRCULANT,MEAN_SHIFT_LIKELIHOOD
+    }
 
     public ObjectTrackerActivity() {
-        super(Resolution.MAX);
+        super(Resolution.R1920x1080);
     }
 
     @Override
@@ -63,30 +64,22 @@ public class ObjectTrackerActivity extends DemoCamera2Activity
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
-//        LayoutInflater inflater = getLayoutInflater();
-        //LinearLayout controls = (LinearLayout)inflater.inflate(R.layout.objecttrack_controls,null);
-
-        //spinnerView = controls.findViewById(R.id.spinner_algs);
-//        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-//                R.array.tracking_objects, android.R.layout.simple_spinner_item);
-//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-//        spinnerView.setAdapter(adapter);
-//        spinnerView.setOnItemSelectedListener(this);
-
-        //setControls(controls);
-        FrameLayout surfaceLayout = findViewById(R.id.camera_frame_layout);
+        surfaceLayout = findViewById(R.id.camera_frame_layout);
         startCamera(surfaceLayout,null);
         displayView.setOnTouchListener(this);
+
+        Button button = findViewById(R.id.button);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                resetPressed();
+            }
+        });
+
     }
 
     @Override
     public void createNewProcessor() {
-        startObjectTracking(0);
-    }
-
-    @Override
-    public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long id ) {
-        startObjectTracking(0);
+        startObjectTracking(setTrackerType(CIRCULANT));
     }
 
     private void startObjectTracking(int pos) {
@@ -130,9 +123,6 @@ public class ObjectTrackerActivity extends DemoCamera2Activity
     }
 
     @Override
-    public void onNothingSelected(AdapterView<?> adapterView) {}
-
-    @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
         if( mode == 0 ) {
             if(MotionEvent.ACTION_DOWN == motionEvent.getActionMasked()) {
@@ -151,8 +141,19 @@ public class ObjectTrackerActivity extends DemoCamera2Activity
         return true;
     }
 
-    public void resetPressed( View view ) {
+    public void resetPressed( ) {
         mode = 0;
+    }
+
+    private int setTrackerType(TrackerType type) {
+        switch (type) {
+            case CIRCULANT:
+                return 0;
+            case MEAN_SHIFT_LIKELIHOOD:
+                return 3;
+            default:
+                throw new IllegalArgumentException("Unknown");
+        }
     }
 
     protected class TrackingProcessing extends DemoProcessingAbstract {
@@ -179,10 +180,10 @@ public class ObjectTrackerActivity extends DemoCamera2Activity
             paintSelected.setARGB(0xFF/2,0xFF,0xFF,0);
             paintSelected.setStyle(Paint.Style.FILL_AND_STROKE);
 
-            paintLine0.setColor(Color.RED);
-            paintLine1.setColor(Color.MAGENTA);
-            paintLine2.setColor(Color.BLUE);
-            paintLine3.setColor(Color.GREEN);
+            paintLine0.setColor(Color.YELLOW);
+            paintLine1.setColor(Color.YELLOW);
+            paintLine2.setColor(Color.YELLOW);
+            paintLine3.setColor(Color.YELLOW);
 
             // Create out paint to use for drawing
             textPaint.setARGB(255, 200, 0, 0);
@@ -190,6 +191,13 @@ public class ObjectTrackerActivity extends DemoCamera2Activity
 
         private void drawLine( Canvas canvas , Point2D_F64 a , Point2D_F64 b , Paint color ) {
             canvas.drawLine((float)a.x,(float)a.y,(float)b.x,(float)b.y,color);
+        }
+
+        private void drawCenter(Canvas canvas, Point2D_F64 a, Point2D_F64 c, Paint color ) {
+            float centerX = (float) (c.x + a.x)/2;
+            float centerY = (float) (c.y + a.y)/2;
+
+            canvas.drawPoint(centerX,centerY, paintLine0);
         }
 
         private void makeInBounds( Point2D_F64 p ) {
@@ -272,6 +280,8 @@ public class ObjectTrackerActivity extends DemoCamera2Activity
                 if( visible ) {
                     Quadrilateral_F64 q = location;
 
+                    drawCenter(canvas,q.a,q.c,paintLine0);
+
                     drawLine(canvas,q.a,q.b,paintLine0);
                     drawLine(canvas,q.b,q.c,paintLine1);
                     drawLine(canvas,q.c,q.d,paintLine2);
@@ -289,8 +299,11 @@ public class ObjectTrackerActivity extends DemoCamera2Activity
                 visible = true;
                 mode = 4;
             } else if( mode == 4 ) {
+                //surfaceLayout.setVisibility(View.INVISIBLE);
                 visible = tracker.process(input,location);
+                System.out.println(location);
             }
         }
     }
+
 }
