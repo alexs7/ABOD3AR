@@ -73,25 +73,25 @@ class ARPlanElement {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-
-                        if(waitTime < 900){
-                            opacity = "FF";
-                        }
-
-                        if(waitTime > 900){
-                            opacity = "A6";
-                        }
-
-                        if(waitTime > 1400){
-                            opacity = "A6";
-                            color = "0000ff";
-                        }else{
-                            color = "2f4f4f";
-                        }
+//
+//                        if(waitTime < 900){
+//                            opacity = "FF";
+//                        }
+//
+//                        if(waitTime > 900){
+//                            opacity = "A6";
+//                        }
+//
+//                        if(waitTime > 1400){
+//                            opacity = "A6";
+//                            color = "0000ff";
+//                        }else{
+//                            color = "2f4f4f";
+//                        }
 
                         message = new Message();
                         message.what = ARELEMENT_BACKGROUND_COLOR_CHANGE;
-                        message.obj = getUIName() + ":" + "#"+opacity+"0000ff";
+                        message.obj = getUIName() + ":" + "#0000ff";
                         handler.sendMessage(message);
 
                         try {
@@ -102,7 +102,7 @@ class ARPlanElement {
 
                         message = new Message();
                         message.what = ARELEMENT_BACKGROUND_COLOR_CHANGE;
-                        message.obj = getUIName() + ":" + "#"+opacity+color;
+                        message.obj = getUIName() + ":" + "#2f4f4f";
                         handler.sendMessage(message);
                     }else{ //TODO: Do I need this sleep ?
                         try {

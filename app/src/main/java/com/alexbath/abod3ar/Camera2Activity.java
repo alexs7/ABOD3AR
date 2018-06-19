@@ -362,6 +362,9 @@ public abstract class Camera2Activity extends VisualizeCamera2Activity {
             case R1920x1080:
                 return 1920*1080;
 
+            case R1600x900:
+                return 1600*900;
+
             default:
                 throw new IllegalArgumentException("Unknown");
         }
@@ -373,6 +376,6 @@ public abstract class Camera2Activity extends VisualizeCamera2Activity {
      * resolution should choose a relative one.
      */
     public enum Resolution {
-        LOW,MEDIUM,HIGH,MAX,R320x240,R640x480,R1920x1080;
+        LOW,MEDIUM,HIGH,MAX,R320x240,R640x480,R1920x1080,R1600x900;
     }
 }

@@ -40,7 +40,7 @@ import georegression.struct.point.Point2D_F64;
 import georegression.struct.point.Point2D_I32;
 import georegression.struct.shapes.Quadrilateral_F64;
 
-import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.CIRCULANT;
+import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.MEAN_SHIFT;
 
 /**
  * Allow the user to select an object in the image and then track it
@@ -58,15 +58,18 @@ public class ObjectTrackerActivity extends Camera2Activity
 
     private Point2D_I32 click0 = new Point2D_I32();
     private Point2D_I32 click1 = new Point2D_I32();
-    private FrameLayout surfaceLayout;
-    private Button connectToServerbutton;
-    private Button loadPlanButton;
-    private TextView statusTextView;
-    private TextView serverTextView;
-    private Button reset_button;
+    private FrameLayout surfaceLayout = null;
+    private Button connectToServerbutton = null;
+    private Button loadPlanButton = null;
+    private TextView statusTextView = null;
+    private TextView serverTextView = null;
+    private Button reset_button = null;
+    private Button debugButton = null;
+    private ConstraintLayout rootLayout = null;
     private ArrayList<ARPlanElement> drivesList = null;
     private ARPlanElement driveRoot = null;
-    private boolean showElements = false;
+    private boolean showARElements = false;
+    private boolean showUI = false;
     private static final int START_SERVER_POLLING = 0;
     private static final int SERVER_RESPONSE = 1;
     private static final int START_FLASHING = 2;
@@ -74,11 +77,12 @@ public class ObjectTrackerActivity extends Camera2Activity
     private static final int DEFINE_SERVER_REQUEST = 4;
     private static final int HIDE_ARPLANELEMENTS = 6;
     private static final int SHOW_ARPLANELEMENTS = 7;
-    private NetworkThread networkThread;
-    private Handler generalHandler;
+    private NetworkThread networkThread = null;
+    private Handler generalHandler = null;
+    private String planName = null;
 
     public enum TrackerType { // TODO: add the others later
-        CIRCULANT,MEAN_SHIFT_LIKELIHOOD
+        CIRCULANT,MEAN_SHIFT_LIKELIHOOD,MEAN_SHIFT
     }
 
     public ObjectTrackerActivity() {
@@ -98,12 +102,17 @@ public class ObjectTrackerActivity extends Camera2Activity
         createGeneralHandler();
         createNetworkThread();
 
+        planName = "plans/Plan6.inst";
+
+        rootLayout = findViewById(R.id.root_layout);
         surfaceLayout = findViewById(R.id.camera_frame_layout);
         statusTextView = (TextView) findViewById(R.id.status_text);
         serverTextView = (TextView) findViewById(R.id.server_response);
         serverTextView.setMovementMethod(new ScrollingMovementMethod());
         connectToServerbutton = findViewById(R.id.connect_server_button);
-        loadPlanButton  = findViewById(R.id.load_plan_button);
+        loadPlanButton = findViewById(R.id.load_plan_button);
+        debugButton = findViewById(R.id.debug_mode);
+
         startCamera(surfaceLayout,null);
         displayView.setOnTouchListener(this);
 
@@ -114,10 +123,32 @@ public class ObjectTrackerActivity extends Camera2Activity
             }
         });
 
+        debugButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if(showUI) {
+                    showUI = false;
+                    serverTextView.setVisibility(View.INVISIBLE);
+                    connectToServerbutton.setVisibility(View.INVISIBLE);
+                    loadPlanButton.setVisibility(View.INVISIBLE);
+                    statusTextView.setVisibility(View.INVISIBLE);
+                    serverTextView.setVisibility(View.INVISIBLE);
+                    reset_button.setVisibility(View.INVISIBLE);
+                }else{
+                    showUI = true;
+                    serverTextView.setVisibility(View.VISIBLE);
+                    connectToServerbutton.setVisibility(View.VISIBLE);
+                    loadPlanButton.setVisibility(View.VISIBLE);
+                    statusTextView.setVisibility(View.VISIBLE);
+                    serverTextView.setVisibility(View.VISIBLE);
+                    reset_button.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
         connectToServerbutton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if(drivesList != null) {
-                    generalHandler.sendEmptyMessage(DEFINE_SERVER_REQUEST);
+                    networkThread.setRequest(getRequestFromDrives(drivesList));
                     generalHandler.sendEmptyMessage(START_SERVER_POLLING);
                 }else {
                     statusTextView.append("\n Load a Plan first!");
@@ -126,36 +157,39 @@ public class ObjectTrackerActivity extends Camera2Activity
         });
 
         loadPlanButton.setOnClickListener(v -> {
-            String fileName = "plans/Plan6.inst";
-            List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
 
-            ConstraintLayout cl = findViewById(R.id.root_layout);
-            drivesList = new ArrayList<>();
+            if(driveRoot == null && drivesList == null) {
 
-            driveRoot = new ARPlanElement(getApplicationContext(), "Drives", Color.YELLOW);
+                String fileName = planName;
+                List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
 
-            for (DriveCollection driveCollection : driveCollections){
+                drivesList = new ArrayList<>();
 
-                ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), driveCollection.getNameOfElement(), Color.RED);
-                arPlanElement.setUIName(driveCollection.getNameOfElement());
+                driveRoot = new ARPlanElement(getApplicationContext(), "Drives", Color.YELLOW);
+                rootLayout.addView(driveRoot.getView());
 
-                arPlanElement.createFlasherThread(generalHandler);
+                for (DriveCollection driveCollection : driveCollections) {
 
-                drivesList.add(arPlanElement);
-                cl.addView(arPlanElement.getView());
+                    ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), driveCollection.getNameOfElement(), Color.RED);
+                    arPlanElement.setUIName(driveCollection.getNameOfElement());
 
-                arPlanElement.getView().setOnClickListener(new View.OnClickListener() {
-                    ARPlanElement arPlanElementListener = arPlanElement;
-                    public void onClick(View v) {
-                        statusTextView.append("\n "+arPlanElementListener.getUIName());
-                    }
-                });
+                    arPlanElement.createFlasherThread(generalHandler);
+
+                    drivesList.add(arPlanElement);
+                    rootLayout.addView(arPlanElement.getView());
+
+                    arPlanElement.getView().setOnClickListener(new View.OnClickListener() {
+                        ARPlanElement arPlanElementListener = arPlanElement;
+
+                        public void onClick(View v) {
+                            statusTextView.append("\n " + arPlanElementListener.getUIName());
+                        }
+                    });
+                }
+
+                showARElements = true;
+                generalHandler.sendEmptyMessage(START_FLASHING);
             }
-
-            cl.addView(driveRoot.getView());
-            showElements = true;
-
-            generalHandler.sendEmptyMessage(START_FLASHING);
         });
 
     }
@@ -170,11 +204,6 @@ public class ObjectTrackerActivity extends Camera2Activity
             public void handleMessage(Message msg){
 
                 switch (msg.what){
-                    case DEFINE_SERVER_REQUEST:
-
-                        networkThread.setRequest(drivesList);
-
-                        break;
                     case START_SERVER_POLLING:
 
                         networkThread.start();
@@ -201,7 +230,12 @@ public class ObjectTrackerActivity extends Camera2Activity
                                                 drive.increaseFlashFrequency();
                                             }else{
                                                 //decrease flash/blink freq
-                                                drive.decreaseFlashFrequency();
+                                                //drive.decreaseFlashFrequency();
+                                                //drive.getView().setBackgroundColor(Color.parseColor("#2f4f4f"));
+                                                Message message = new Message();
+                                                message.what = ARELEMENT_BACKGROUND_COLOR_CHANGE;
+                                                message.obj = drive.getUIName() + ":" + "#2f4f4f";
+                                                generalHandler.sendMessage(message);
                                             }
                                         }
                                     }
@@ -265,7 +299,7 @@ public class ObjectTrackerActivity extends Camera2Activity
 
     @Override
     public void createNewProcessor() {
-        startObjectTracking(setTrackerType(CIRCULANT));
+        startObjectTracking(setTrackerType(MEAN_SHIFT));
     }
 
     private void startObjectTracking(int pos) {
@@ -328,6 +362,13 @@ public class ObjectTrackerActivity extends Camera2Activity
     }
 
     public void resetPressed( ) {
+        rootLayout.removeView(driveRoot.getView());
+        for (ARPlanElement arPlanElement : drivesList){
+            rootLayout.removeView(arPlanElement.getView());
+        }
+        driveRoot = null;
+        drivesList = null;
+        showARElements = false;
         mode = 0;
     }
 
@@ -335,6 +376,8 @@ public class ObjectTrackerActivity extends Camera2Activity
         switch (type) {
             case CIRCULANT:
                 return 0;
+            case MEAN_SHIFT:
+                return 1;
             case MEAN_SHIFT_LIKELIHOOD:
                 return 3;
             default:
@@ -370,7 +413,7 @@ public class ObjectTrackerActivity extends Camera2Activity
             paintLine0.setColor(Color.YELLOW);
             paintLine1.setColor(Color.YELLOW);
             paintLine2.setColor(Color.YELLOW);
-            paintLine3.setColor(Color.YELLOW);
+            paintLine3.setColor(Color.WHITE);
 
             // Create out paint to use for drawing
             textPaint.setARGB(255, 200, 0, 0);
@@ -413,7 +456,7 @@ public class ObjectTrackerActivity extends Camera2Activity
             paintLine0.setStrokeWidth(5f*density);
             paintLine1.setStrokeWidth(5f*density);
             paintLine2.setStrokeWidth(5f*density);
-            paintLine3.setStrokeWidth(5f*density);
+            paintLine3.setStrokeWidth(2.5f*density);
             textPaint.setTextSize(60*density);
         }
 
@@ -467,10 +510,30 @@ public class ObjectTrackerActivity extends Camera2Activity
                     updateCenter();
                     drawCenter(canvas,center,paintLine1);
 
-                    drawLine(canvas,q.a,q.b,paintLine0);
-                    drawLine(canvas,q.b,q.c,paintLine1);
-                    drawLine(canvas,q.c,q.d,paintLine2);
-                    drawLine(canvas,q.d,q.a,paintLine3);
+//                    drawLine(canvas,q.a,q.b,paintLine0);
+//                    drawLine(canvas,q.b,q.c,paintLine1);
+//                    drawLine(canvas,q.c,q.d,paintLine2);
+//                    drawLine(canvas,q.d,q.a,paintLine3);
+
+                    if(showARElements){
+                        driveRoot.getView().setX((float) (center.x - driveRoot.getView().getWidth()/2));
+                        driveRoot.getView().setY((float) (center.y - driveRoot.getView().getHeight()/2));
+
+                        for(int k = 0; k<drivesList.size(); k++){
+
+                            //TODO: 4 should be drivesList.size()!
+                            float xV = (float) (center.x + 290 * Math.cos(Math.PI / drivesList.size() * (2*k + 1)));
+                            float yV = (float) (center.y + 290 * Math.sin(Math.PI / drivesList.size() * (2*k + 1)));
+
+                            drivesList.get(k).getView().setX(Math.round(xV));
+                            drivesList.get(k).getView().setY(Math.round(yV));
+
+                            drawLine(canvas,new Point2D_F64(center.x,center.y),
+                                    new Point2D_F64(xV+ drivesList.get(k).getView().getWidth()/2,yV + drivesList.get(k).getView().getHeight()/2),paintLine3);
+
+                        }
+                    }
+
                 } else {
                     canvas.drawText("?",width/2,height/2,textPaint);
                 }
@@ -491,28 +554,28 @@ public class ObjectTrackerActivity extends Camera2Activity
             } else if( mode == 4 ) {
                 //surfaceLayout.setVisibility(View.INVISIBLE);
                 visible = tracker.process(input,location);
-
-                if(showElements){
-                    driveRoot.getView().setX((float) (center.x - driveRoot.getView().getWidth()/2));
-                    driveRoot.getView().setY((float) (center.y - driveRoot.getView().getHeight()/2));
-
-                    for(int k = 0; k<drivesList.size(); k++){
-
-                        //TODO: 4 should be drivesList.size()!
-                        float xV = (float) (center.x + 260 * Math.cos(Math.PI / drivesList.size() * (2*k + 1)));
-                        float yV = (float) (center.y + 260 * Math.sin(Math.PI / drivesList.size() * (2*k + 1)));
-
-                        drivesList.get(k).getView().setX(Math.round(xV));
-                        drivesList.get(k).getView().setY(Math.round(yV));
-
-//                        Imgproc.line(frame, center,
-//                                new Point(xV, // + drivesList.get(k).getView().getWidth()/2,
-//                                        yV), // + drivesList.get(k).getView().getHeight()/2),
-//                                new Scalar(255,255,255),3);
-                    }
-                }
             }
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        networkThread.stop();
+        generalHandler.removeCallbacksAndMessages(null);
+    }
+
+    private String getRequestFromDrives(ArrayList<ARPlanElement> list) {
+        StringBuilder request = new StringBuilder();
+
+        for (ARPlanElement arPlanElement : list){
+            request.append(arPlanElement.getUIName());
+            request.append(":");
+        }
+        String requestString = request.toString();
+
+        return requestString.substring(0, requestString.length() - 1);
     }
 
     private boolean isValidLine(String[] splittedLine) {

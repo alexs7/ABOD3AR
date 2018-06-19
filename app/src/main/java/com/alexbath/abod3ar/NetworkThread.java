@@ -84,16 +84,8 @@ public class NetworkThread implements Runnable {
 
     }
 
-    public void setRequest(ArrayList<ARPlanElement> drivesList) {
-        StringBuilder request = new StringBuilder();
-
-        for (ARPlanElement arPlanElement : drivesList){
-            request.append(arPlanElement.getUIName());
-            request.append(":");
-        }
-        String requestString = request.toString();
-
-        this.request = requestString.substring(0, requestString.length() - 1);
+    public void setRequest(String request) {
+        this.request = request;
     }
 
 }
