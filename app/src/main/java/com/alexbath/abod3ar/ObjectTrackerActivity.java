@@ -74,7 +74,7 @@ public class ObjectTrackerActivity extends Camera2Activity
     private static final int SERVER_RESPONSE = 1;
     private static final int START_FLASHING = 2;
     private static final int ARELEMENT_BACKGROUND_COLOR_CHANGE = 3;
-    private static final int DEFINE_SERVER_REQUEST = 4;
+    private static final int STOP_FLASHING = 4;
     private static final int HIDE_ARPLANELEMENTS = 6;
     private static final int SHOW_ARPLANELEMENTS = 7;
     private NetworkThread networkThread = null;
@@ -190,6 +190,11 @@ public class ObjectTrackerActivity extends Camera2Activity
                             statusTextView.append("\n Looking at Drive: " + localArPlanElement.getUIName());
                             removeARPlanElements(rootLayout,driveRoot,drivesList);
                             showARElements = false;
+                            for(ARPlanElement arPlanElem : drivesList){
+                                arPlanElem.stopFlasherThread();
+                            }
+                            driveRoot = arPlanElement;
+                            //drivesList =
                         }
                     });
                 }
@@ -253,12 +258,11 @@ public class ObjectTrackerActivity extends Camera2Activity
                         break;
 
                     case START_FLASHING:
-
-                        for (ARPlanElement arPlanElement : drivesList){
-                            arPlanElement.startFlasherThread();
-                        }
+                        startFlashingARElements(driveRoot,drivesList);
                         break;
-
+                    case STOP_FLASHING:
+                        stopFlashingARElements(driveRoot,drivesList);
+                        break;
                     case ARELEMENT_BACKGROUND_COLOR_CHANGE:
 
                         String[] flashInfo = msg.obj.toString().split(":");
@@ -295,6 +299,21 @@ public class ObjectTrackerActivity extends Camera2Activity
                 }
             }
         };
+    }
+
+    private void stopFlashingARElements(ARPlanElement driveRoot, ArrayList<ARPlanElement> drivesList) {
+        //driveRoot.stopFlasherThread();
+        for (ARPlanElement arPlanElement : drivesList){
+            arPlanElement.stopFlasherThread();
+            arPlanElement.join();
+        }
+    }
+
+    private void startFlashingARElements(ARPlanElement driveRoot, ArrayList<ARPlanElement> drivesList) {
+        //driveRoot.startFlasherThread();
+        for (ARPlanElement arPlanElement : drivesList){
+            arPlanElement.startFlasherThread();
+        }
     }
 
     @Override
@@ -361,10 +380,14 @@ public class ObjectTrackerActivity extends Camera2Activity
         return true;
     }
 
-    public void resetPressed( ) {
+    public void resetPressed() {
+        System.out.println("stopping network thread");
+        networkThread.stop();
+        networkThread.join();
+        System.out.println(" network thread stopped");
+        generalHandler.removeCallbacksAndMessages(null);
+        stopFlashingARElements(driveRoot,drivesList);
         removeARPlanElements(rootLayout,driveRoot,drivesList);
-        driveRoot = null;
-        drivesList = null;
         showARElements = false;
         mode = 0;
     }

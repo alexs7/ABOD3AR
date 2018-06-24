@@ -54,7 +54,7 @@ public class NetworkThread implements Runnable {
             br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             while(running.get()){
-
+                System.out.println("talking to server");
                 try {
                     Thread.sleep(interval); //network is might be slow too!
                 } catch (InterruptedException e) {
@@ -79,9 +79,18 @@ public class NetworkThread implements Runnable {
             }
 
         } catch (IOException e) {
+            System.out.println("stopeed talking to server");
             e.printStackTrace();
         }
 
+    }
+
+    public void join(){
+        try {
+            worker.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void setRequest(String request) {

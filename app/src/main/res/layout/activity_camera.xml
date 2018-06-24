@@ -34,7 +34,7 @@
 
     <TextView
         android:id="@+id/server_response"
-        android:layout_width="232dp"
+        android:layout_width="249dp"
         android:layout_height="96dp"
         android:background="#59000000"
         android:gravity="bottom"

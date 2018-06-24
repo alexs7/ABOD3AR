@@ -55,6 +55,14 @@ class ARPlanElement {
         running.set(false);
     }
 
+    public void join(){
+        try {
+            flasherThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void createFlasherThread(Handler handler) {
 
         flasherThread = new Thread(new Runnable() {
