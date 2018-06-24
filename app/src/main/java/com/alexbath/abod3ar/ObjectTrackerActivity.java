@@ -184,10 +184,12 @@ public class ObjectTrackerActivity extends Camera2Activity
                     rootLayout.addView(arPlanElement.getView());
 
                     arPlanElement.getView().setOnClickListener(new View.OnClickListener() {
-                        ARPlanElement arPlanElementListener = arPlanElement;
+                        ARPlanElement localArPlanElement = arPlanElement;
 
                         public void onClick(View v) {
-                            statusTextView.append("\n " + arPlanElementListener.getUIName());
+                            statusTextView.append("\n Looking at Drive: " + localArPlanElement.getUIName());
+                            removeARPlanElements(rootLayout,driveRoot,drivesList);
+                            showARElements = false;
                         }
                     });
                 }
@@ -273,16 +275,9 @@ public class ObjectTrackerActivity extends Camera2Activity
 
                     case HIDE_ARPLANELEMENTS:
 
-                        if(driveRoot != null && drivesList != null) {
+                            hideARPlanElements(driveRoot,drivesList);
 
-                            driveRoot.getView().setVisibility(View.INVISIBLE);
-
-                            for (ARPlanElement arPlanElement : drivesList) {
-                                arPlanElement.getView().setVisibility(View.INVISIBLE);
-                            }
-                        }
                         break;
-
                     case SHOW_ARPLANELEMENTS:
 
                         if(driveRoot != null && drivesList != null) {
@@ -367,10 +362,7 @@ public class ObjectTrackerActivity extends Camera2Activity
     }
 
     public void resetPressed( ) {
-        rootLayout.removeView(driveRoot.getView());
-        for (ARPlanElement arPlanElement : drivesList){
-            rootLayout.removeView(arPlanElement.getView());
-        }
+        removeARPlanElements(rootLayout,driveRoot,drivesList);
         driveRoot = null;
         drivesList = null;
         showARElements = false;
@@ -570,6 +562,26 @@ public class ObjectTrackerActivity extends Camera2Activity
         networkThread.stop();
         generalHandler.removeCallbacksAndMessages(null);
     }
+
+    private void hideARPlanElements(ARPlanElement driveRoot, ArrayList<ARPlanElement> drivesList) {
+        if(driveRoot != null && drivesList != null) {
+            driveRoot.getView().setVisibility(View.INVISIBLE);
+
+            for (ARPlanElement arPlanElement : drivesList) {
+                arPlanElement.getView().setVisibility(View.INVISIBLE);
+            }
+        }
+    }
+
+    private void removeARPlanElements(ConstraintLayout rootLayout, ARPlanElement driveRoot, ArrayList<ARPlanElement> drivesList){
+        if(driveRoot != null && drivesList != null) {
+            rootLayout.removeView(driveRoot.getView());
+            for (ARPlanElement arPlanElement : drivesList) {
+                rootLayout.removeView(arPlanElement.getView());
+            }
+        }
+    }
+
 
     private String getRequestFromDrives(ArrayList<ARPlanElement> list) {
         StringBuilder request = new StringBuilder();
