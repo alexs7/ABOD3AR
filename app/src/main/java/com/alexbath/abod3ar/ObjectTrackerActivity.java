@@ -80,6 +80,7 @@ public class ObjectTrackerActivity extends Camera2Activity
     private NetworkThread networkThread = null;
     private Handler generalHandler = null;
     private String planName = null;
+    private String serverIPAddress = null;
 
     public enum TrackerType { // TODO: add the others later
         CIRCULANT,MEAN_SHIFT_LIKELIHOOD,MEAN_SHIFT
@@ -99,19 +100,23 @@ public class ObjectTrackerActivity extends Camera2Activity
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
+        planName = "plans/DiaPlan3.inst";
+        serverIPAddress = "192.168.178.21";
+
         createGeneralHandler();
         createNetworkThread();
-
-        planName = "plans/Plan6.inst";
 
         rootLayout = findViewById(R.id.root_layout);
         surfaceLayout = findViewById(R.id.camera_frame_layout);
         statusTextView = (TextView) findViewById(R.id.status_text);
+        statusTextView.setMovementMethod(new ScrollingMovementMethod());
         serverTextView = (TextView) findViewById(R.id.server_response);
         serverTextView.setMovementMethod(new ScrollingMovementMethod());
         connectToServerbutton = findViewById(R.id.connect_server_button);
         loadPlanButton = findViewById(R.id.load_plan_button);
         debugButton = findViewById(R.id.debug_mode);
+
+        statusTextView.append("\n Load a Plan First!");
 
         startCamera(surfaceLayout,null);
         displayView.setOnTouchListener(this);
@@ -195,7 +200,7 @@ public class ObjectTrackerActivity extends Camera2Activity
     }
 
     private void createNetworkThread() {
-        networkThread = new NetworkThread(50,generalHandler,"192.168.0.101", 3001);
+        networkThread = new NetworkThread(50,generalHandler,serverIPAddress, 3001);
     }
 
     private void createGeneralHandler() {

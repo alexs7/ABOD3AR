@@ -339,7 +339,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 switch (msg.what){
                     case DEFINE_SERVER_REQUEST:
 
-                        networkThread.setRequest(drivesList);
+                        //networkThread.setRequest(drivesList);
 
                         break;
                     case START_SERVER_POLLING:
