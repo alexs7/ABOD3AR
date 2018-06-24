@@ -58,7 +58,11 @@ class ARPlanElement {
     public void createFlasherThread(Handler handler) {
 
         flasherThread = new Thread(new Runnable() {
+
             Message message = null;
+            String opacity = ""; // Reference: https://stackoverflow.com/questions/15852122/hex-transparency-in-colors
+            String color = "";
+
             @Override
             public void run() {
                 while(running.get()){
@@ -69,6 +73,21 @@ class ARPlanElement {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
+//
+//                        if(waitTime < 900){
+//                            opacity = "FF";
+//                        }
+//
+//                        if(waitTime > 900){
+//                            opacity = "A6";
+//                        }
+//
+//                        if(waitTime > 1400){
+//                            opacity = "A6";
+//                            color = "0000ff";
+//                        }else{
+//                            color = "2f4f4f";
+//                        }
 
                         message = new Message();
                         message.what = ARELEMENT_BACKGROUND_COLOR_CHANGE;
@@ -85,7 +104,7 @@ class ARPlanElement {
                         message.what = ARELEMENT_BACKGROUND_COLOR_CHANGE;
                         message.obj = getUIName() + ":" + "#2f4f4f";
                         handler.sendMessage(message);
-                    }else{
+                    }else{ //TODO: Do I need this sleep ?
                         try {
                             Thread.sleep(2000);
                         } catch (InterruptedException e) {
@@ -101,14 +120,14 @@ class ARPlanElement {
     public void increaseFlashFrequency(){
         waitTime -= 300;
         if (waitTime < 0) {
-            waitTime = 50;
+            waitTime = 100;
         }
     }
 
     public void decreaseFlashFrequency(){
-        waitTime += 50;
-        if (waitTime > 900) {
-            waitTime = 900;
+        waitTime += 150;
+        if (waitTime > 1500) {
+            waitTime = 1500;
         }
     }
 
