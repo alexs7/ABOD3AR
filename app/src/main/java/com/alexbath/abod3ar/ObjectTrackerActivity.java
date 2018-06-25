@@ -1,6 +1,8 @@
 package com.alexbath.abod3ar;
 
+import android.Manifest;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -10,7 +12,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.constraint.ConstraintLayout;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -26,6 +31,9 @@ import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import boofcv.abst.tracker.ConfigComaniciu2003;
 import boofcv.abst.tracker.ConfigTld;
@@ -70,17 +78,18 @@ public class ObjectTrackerActivity extends Camera2Activity
     private ARPlanElement driveRoot = null;
     private boolean showARElements = false;
     private boolean showUI = false;
-    private static final int START_SERVER_POLLING = 0;
     private static final int SERVER_RESPONSE = 1;
     private static final int START_FLASHING = 2;
     private static final int ARELEMENT_BACKGROUND_COLOR_CHANGE = 3;
     private static final int STOP_FLASHING = 4;
     private static final int HIDE_ARPLANELEMENTS = 6;
     private static final int SHOW_ARPLANELEMENTS = 7;
-    private NetworkThread networkThread = null;
     private Handler generalHandler = null;
     private String planName = null;
     private String serverIPAddress = null;
+    private int serverPort;
+    private ExecutorService networkExecutor = null;
+    private NetworkTask networkTask = null;
 
     public enum TrackerType { // TODO: add the others later
         CIRCULANT,MEAN_SHIFT_LIKELIHOOD,MEAN_SHIFT
@@ -93,6 +102,11 @@ public class ObjectTrackerActivity extends Camera2Activity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED){
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.CAMERA}, 0);
+        }
+
         setContentView(R.layout.activity_camera);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -101,10 +115,11 @@ public class ObjectTrackerActivity extends Camera2Activity
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
         planName = "plans/DiaPlan3.inst";
-        serverIPAddress = "192.168.178.21";
+        serverIPAddress = "138.38.176.225";
+        serverPort = 3001;
 
         createGeneralHandler();
-        createNetworkThread();
+        //createNetworkThread();
 
         rootLayout = findViewById(R.id.root_layout);
         surfaceLayout = findViewById(R.id.camera_frame_layout);
@@ -153,8 +168,16 @@ public class ObjectTrackerActivity extends Camera2Activity
         connectToServerbutton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if(drivesList != null) {
-                    networkThread.setRequest(getRequestFromDrives(drivesList));
-                    generalHandler.sendEmptyMessage(START_SERVER_POLLING);
+
+                    //create executor and start that will get the server requests
+                    networkExecutor = Executors.newSingleThreadExecutor();
+                    networkTask = new NetworkTask(serverIPAddress,serverPort);
+                    networkTask.setRequest(getRequestFromDrives(drivesList));
+                    networkTask.setHandler(generalHandler);
+                    networkExecutor.execute(networkTask);
+
+                    //networkThread.setRequest(getRequestFromDrives(drivesList));
+                    //generalHandler.sendEmptyMessage(START_SERVER_POLLING);
                 }else {
                     statusTextView.append("\n Load a Plan first!");
                 }
@@ -206,21 +229,12 @@ public class ObjectTrackerActivity extends Camera2Activity
 
     }
 
-    private void createNetworkThread() {
-        networkThread = new NetworkThread(50,generalHandler,serverIPAddress, 3001);
-    }
-
     private void createGeneralHandler() {
         generalHandler = new Handler(Looper.getMainLooper()){
             @Override
             public void handleMessage(Message msg){
 
                 switch (msg.what){
-                    case START_SERVER_POLLING:
-
-                        networkThread.start();
-
-                        break;
                     case SERVER_RESPONSE:
 
                         serverTextView.append("\n"+msg.obj);
@@ -380,16 +394,28 @@ public class ObjectTrackerActivity extends Camera2Activity
         return true;
     }
 
-    public void resetPressed() {
-        System.out.println("stopping network thread");
-        networkThread.stop();
-        networkThread.join();
-        System.out.println(" network thread stopped");
-        generalHandler.removeCallbacksAndMessages(null);
-        stopFlashingARElements(driveRoot,drivesList);
-        removeARPlanElements(rootLayout,driveRoot,drivesList);
-        showARElements = false;
-        mode = 0;
+    private boolean stopNetworkTask(ExecutorService service) {
+
+        if(service == null){
+            return false;
+        }else {
+            service.shutdown();
+            try {
+                if (!service.awaitTermination(100, TimeUnit.MICROSECONDS)) {
+                    service.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                System.out.println("stopNetworkTask() throwed " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        if(service.isTerminated() && service.isShutdown()){
+            Log.i("NETWORK_TASK", "SUCCESSFULL SHUTDOWN OF NETWORK_TASK");
+            return true;
+        }else{
+            return false;
+        }
     }
 
     private int setTrackerType(TrackerType type) {
@@ -578,11 +604,19 @@ public class ObjectTrackerActivity extends Camera2Activity
         }
     }
 
+    public void resetPressed() {
+        stopNetworkTask(networkExecutor);
+        generalHandler.removeCallbacksAndMessages(null);
+//        stopFlashingARElements(driveRoot,drivesList);
+        removeARPlanElements(rootLayout,driveRoot,drivesList);
+        showARElements = false;
+        mode = 0;
+    }
     @Override
     protected void onStop() {
         super.onStop();
 
-        networkThread.stop();
+        stopNetworkTask(networkExecutor);
         generalHandler.removeCallbacksAndMessages(null);
     }
 
