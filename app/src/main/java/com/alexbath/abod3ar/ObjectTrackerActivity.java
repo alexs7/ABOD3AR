@@ -168,12 +168,17 @@ public class ObjectTrackerActivity extends Camera2Activity
             public void onClick(View v) {
                 if(drivesList != null) {
 
-                    //create executor and start that will get the server requests
-                    networkExecutor = Executors.newSingleThreadExecutor();
-                    networkTask = new NetworkTask(serverIPAddress,serverPort);
-                    networkTask.setRequest(getRequestFromDrives(drivesList));
-                    networkTask.setHandler(generalHandler);
-                    networkExecutor.execute(networkTask);
+                    if(networkExecutor == null) {
+                        //create executor and start that will get the server requests
+                        networkExecutor = Executors.newSingleThreadExecutor();
+                        networkTask = new NetworkTask(serverIPAddress, serverPort);
+                        networkTask.setRequest(getRequestFromDrives(drivesList));
+                        networkTask.setHandler(generalHandler);
+                        networkExecutor.execute(networkTask);
+
+                    }else{
+                        System.out.println("networkExecutor already exists!");
+                    }
 
                 }else {
                     statusTextView.append("\n Load a Plan first!");
