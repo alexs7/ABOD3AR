@@ -119,7 +119,6 @@ public class ObjectTrackerActivity extends Camera2Activity
         serverPort = 3001;
 
         createGeneralHandler();
-        //createNetworkThread();
 
         rootLayout = findViewById(R.id.root_layout);
         surfaceLayout = findViewById(R.id.camera_frame_layout);
@@ -176,8 +175,6 @@ public class ObjectTrackerActivity extends Camera2Activity
                     networkTask.setHandler(generalHandler);
                     networkExecutor.execute(networkTask);
 
-                    //networkThread.setRequest(getRequestFromDrives(drivesList));
-                    //generalHandler.sendEmptyMessage(START_SERVER_POLLING);
                 }else {
                     statusTextView.append("\n Load a Plan first!");
                 }
