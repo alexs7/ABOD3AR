@@ -16,7 +16,6 @@ public class NetworkTask implements Runnable {
     private String ipAddress;
     private int pollInterval;
     private Socket socket = null;
-    private PrintWriter out = null;
     private BufferedReader br = null;
     private String request = null;
     private String response = null;
@@ -34,7 +33,6 @@ public class NetworkTask implements Runnable {
 
         try {
             socket = new Socket(ipAddress, port);
-            out = new PrintWriter(socket.getOutputStream(), true);
             br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         } catch (IOException e) {
             e.printStackTrace();
@@ -45,8 +43,6 @@ public class NetworkTask implements Runnable {
 
                 Thread.sleep(pollInterval);
 
-                System.out.println(request);
-                out.println(request);
                 try {
                     response = br.readLine();
                 } catch (IOException e) {
@@ -67,7 +63,6 @@ public class NetworkTask implements Runnable {
         } catch (InterruptedException threadE) {
             try {
                 br.close();
-                out.close();
                 socket.close();
             } catch (IOException socketE) {
                 socketE.printStackTrace();

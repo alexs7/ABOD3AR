@@ -170,7 +170,6 @@ public class ObjectTrackerActivity extends Camera2Activity
                         //create executor and start that will get the server requests
                         networkExecutor = Executors.newSingleThreadExecutor();
                         networkTask = new NetworkTask(serverIPAddress, serverPort);
-                        networkTask.setRequest(getRequestFromDrives(drivesList));
                         networkTask.setHandler(generalHandler);
                         networkExecutor.execute(networkTask);
 
@@ -211,7 +210,6 @@ public class ObjectTrackerActivity extends Camera2Activity
                             //change request
                             PlanElement triggeredElement = localArPlanElement.getDriveCollection().getTriggeredElement();
                             if(triggeredElement != null) {
-                                networkTask.addToRequest(request,triggeredElement.getNameOfElement());
                             }
 //                            showARElements = false;
 //                            statusTextView.append("\n Looking at Drive: " + localArPlanElement.getUIName());
@@ -242,6 +240,7 @@ public class ObjectTrackerActivity extends Camera2Activity
                     case SERVER_RESPONSE:
 
                         serverTextView.append("\n"+msg.obj);
+
                         updateARElementsVisuals(msg);
 
                         break;
@@ -288,7 +287,7 @@ public class ObjectTrackerActivity extends Camera2Activity
                             }
                         }
                     }else{
-                        System.out.println("NOT A DRIVE");
+                        //System.out.println("NOT A DRIVE");
                     }
                 }
             }
@@ -603,19 +602,6 @@ public class ObjectTrackerActivity extends Camera2Activity
                 rootLayout.removeView(arPlanElement.getView());
             }
         }
-    }
-
-
-    private String getRequestFromDrives(ArrayList<ARPlanElement> list) {
-        StringBuilder request = new StringBuilder();
-
-        for (ARPlanElement arPlanElement : list){
-            request.append(arPlanElement.getUIName());
-            request.append(":");
-        }
-        String requestString = request.toString();
-
-        return requestString.substring(0, requestString.length() - 1);
     }
 
     private boolean isValidLine(String[] splittedLine) {
