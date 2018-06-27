@@ -128,7 +128,7 @@ public class ObjectTrackerActivity extends Camera2Activity
         loadPlanButton = findViewById(R.id.load_plan_button);
         debugButton = findViewById(R.id.debug_mode);
 
-        statusTextView.append("\n Load a Plan First!");
+        statusTextView.append("\n Select the Robot first!");
 
         startCamera(surfaceLayout,null);
         displayView.setOnTouchListener(this);
@@ -193,12 +193,12 @@ public class ObjectTrackerActivity extends Camera2Activity
 
                 drivesList = new ArrayList<>();
 
-                driveRoot = new ARPlanElement(getApplicationContext(), "Drives", Color.YELLOW);
+                driveRoot = new ARPlanElement(getApplicationContext(), null, Color.YELLOW);
                 rootLayout.addView(driveRoot.getView());
 
                 for (DriveCollection driveCollection : driveCollections) {
 
-                    ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), driveCollection.getNameOfElement(), Color.RED);
+                    ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), driveCollection, Color.RED);
                     arPlanElement.setUIName(driveCollection.getNameOfElement());
 
                     drivesList.add(arPlanElement);
@@ -208,8 +208,11 @@ public class ObjectTrackerActivity extends Camera2Activity
                         ARPlanElement localArPlanElement = arPlanElement;
 
                         public void onClick(View v) {
-                            //TODO: pause network calls
-                            networkTask.setRequest(localArPlanElement.getUIName());
+                            //change request
+                            PlanElement triggeredElement = localArPlanElement.getDriveCollection().getTriggeredElement();
+                            if(triggeredElement != null) {
+                                networkTask.addToRequest(request,triggeredElement.getNameOfElement());
+                            }
 //                            showARElements = false;
 //                            statusTextView.append("\n Looking at Drive: " + localArPlanElement.getUIName());
 //                            removeARPlanElements(rootLayout,driveRoot,drivesList);
@@ -239,29 +242,7 @@ public class ObjectTrackerActivity extends Camera2Activity
                     case SERVER_RESPONSE:
 
                         serverTextView.append("\n"+msg.obj);
-
-                        String[] splittedLine = ((String) msg.obj).split(" ");
-                        PlanElement planElement = null;
-                        String typeOfPlanElement;
-                        String planElementName = splittedLine[3];
-
-                        if (isValidLine(splittedLine)) {
-                            typeOfPlanElement = splittedLine[2];
-                            if (!isActionPatternElement(typeOfPlanElement)) { //We ignore ActionPatternELements as they are instinct only
-                                planElement = getPlanElement(typeOfPlanElement, planElement, planElementName);
-                                if (planElement != null) {
-                                    if(typeOfPlanElement.equals("D")){
-                                        for (ARPlanElement drive : drivesList){
-                                            if(drive.getUIName().equals(planElementName)){
-                                                drive.setBackgroundColor(Color.parseColor("#0000ff"));
-                                            }else{
-                                                drive.setBackgroundColor(Color.parseColor("#2f4f4f"));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        updateARElementsVisuals(msg);
 
                         break;
                     case HIDE_ARPLANELEMENTS:
@@ -285,6 +266,33 @@ public class ObjectTrackerActivity extends Camera2Activity
                 }
             }
         };
+    }
+
+    private void updateARElementsVisuals(Message msg) {
+        String[] splittedLine = ((String) msg.obj).split(" ");
+        PlanElement planElement = null;
+        String typeOfPlanElement;
+        String planElementName = splittedLine[3];
+
+        if (isValidLine(splittedLine)) {
+            typeOfPlanElement = splittedLine[2];
+            if (!isActionPatternElement(typeOfPlanElement)) { //We ignore ActionPatternELements as they are instinct only
+                planElement = getPlanElement(typeOfPlanElement, planElement, planElementName);
+                if (planElement != null) {
+                    if(typeOfPlanElement.equals("D")){
+                        for (ARPlanElement drive : drivesList){
+                            if(drive.getUIName().equals(planElementName)){
+                                drive.setBackgroundColor(Color.parseColor("#0000ff"));
+                            }else{
+                                drive.setBackgroundColor(Color.parseColor("#2f4f4f"));
+                            }
+                        }
+                    }else{
+                        System.out.println("NOT A DRIVE");
+                    }
+                }
+            }
+        }
     }
 
 

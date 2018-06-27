@@ -5,10 +5,13 @@ import android.graphics.drawable.GradientDrawable;
 import android.view.View;
 import android.widget.TextView;
 
+import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 
 class ARPlanElement {
 
+    private final DriveCollection driveCollection;
     private TextView element;
     private GradientDrawable drawableBackground;
 //    private GradientDrawable drawableForeground;
@@ -17,12 +20,17 @@ class ARPlanElement {
     private static final int ARELEMENT_BACKGROUND_COLOR_CHANGE = 3;
     private final AtomicBoolean running;
 
-    public ARPlanElement(Context applicationContext, String text, int borderColor){
-        element = (TextView) View.inflate(applicationContext, R.layout.plan_element, null);
-        element.setText(text);
-        drawableBackground = (GradientDrawable) element.getBackground();
+    public ARPlanElement(Context applicationContext, DriveCollection driveCollection, int borderColor){
+        this.driveCollection = driveCollection;
+        this.element = (TextView) View.inflate(applicationContext, R.layout.plan_element, null);
+        if(driveCollection == null) {
+            this.element.setText("Drives");
+        }else{
+            this.element.setText(driveCollection.getNameOfElement());
+        }
+        this.drawableBackground = (GradientDrawable) element.getBackground();
 //        drawableForeground = (GradientDrawable) element.getForeground();
-        drawableBackground.setStroke(2, borderColor);
+        this.drawableBackground.setStroke(2, borderColor);
         this.running = new AtomicBoolean(true);
     }
 
@@ -46,4 +54,7 @@ class ARPlanElement {
         return uIName;
     }
 
+    public DriveCollection getDriveCollection() {
+        return driveCollection;
+    }
 }
