@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -79,9 +80,6 @@ public class ObjectTrackerActivity extends Camera2Activity
     private boolean showARElements = false;
     private boolean showUI = false;
     private static final int SERVER_RESPONSE = 1;
-    private static final int START_FLASHING = 2;
-    private static final int ARELEMENT_BACKGROUND_COLOR_CHANGE = 3;
-    private static final int STOP_FLASHING = 4;
     private static final int HIDE_ARPLANELEMENTS = 6;
     private static final int SHOW_ARPLANELEMENTS = 7;
     private Handler generalHandler = null;
@@ -115,7 +113,7 @@ public class ObjectTrackerActivity extends Camera2Activity
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
         planName = "plans/DiaPlan3.inst";
-        serverIPAddress = "138.38.176.225";
+        serverIPAddress = "138.38.166.202";
         serverPort = 3001;
 
         createGeneralHandler();
@@ -203,8 +201,6 @@ public class ObjectTrackerActivity extends Camera2Activity
                     ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), driveCollection.getNameOfElement(), Color.RED);
                     arPlanElement.setUIName(driveCollection.getNameOfElement());
 
-                    arPlanElement.createFlasherThread(generalHandler);
-
                     drivesList.add(arPlanElement);
                     rootLayout.addView(arPlanElement.getView());
 
@@ -212,20 +208,23 @@ public class ObjectTrackerActivity extends Camera2Activity
                         ARPlanElement localArPlanElement = arPlanElement;
 
                         public void onClick(View v) {
-                            statusTextView.append("\n Looking at Drive: " + localArPlanElement.getUIName());
-                            removeARPlanElements(rootLayout,driveRoot,drivesList);
-                            showARElements = false;
-                            for(ARPlanElement arPlanElem : drivesList){
-                                arPlanElem.stopFlasherThread();
-                            }
-                            driveRoot = arPlanElement;
-                            //drivesList =
+                            //TODO: pause network calls
+                            networkTask.setRequest(localArPlanElement.getUIName());
+//                            showARElements = false;
+//                            statusTextView.append("\n Looking at Drive: " + localArPlanElement.getUIName());
+//                            removeARPlanElements(rootLayout,driveRoot,drivesList);
+//                            drivesList.clear();
+//                            driveRoot = arPlanElement;
+//                            rootLayout.addView(driveRoot.getView());
+//                            drivesList.add(new ARPlanElement(getApplicationContext(), driveCollection.getTriggeredElement().getNameOfElement(), Color.RED));
+//                            showARElements = true;
+                            //TODO: change request
+                            //TODO: start network calls
                         }
                     });
                 }
 
                 showARElements = true;
-                generalHandler.sendEmptyMessage(START_FLASHING);
             }
         });
 
@@ -254,16 +253,9 @@ public class ObjectTrackerActivity extends Camera2Activity
                                     if(typeOfPlanElement.equals("D")){
                                         for (ARPlanElement drive : drivesList){
                                             if(drive.getUIName().equals(planElementName)){
-                                                //increase flash/blink freq
-                                                drive.increaseFlashFrequency();
+                                                drive.setBackgroundColor(Color.parseColor("#0000ff"));
                                             }else{
-                                                //decrease flash/blink freq
-                                                //drive.decreaseFlashFrequency();
-                                                //drive.getView().setBackgroundColor(Color.parseColor("#2f4f4f"));
-                                                Message message = new Message();
-                                                message.what = ARELEMENT_BACKGROUND_COLOR_CHANGE;
-                                                message.obj = drive.getUIName() + ":" + "#2f4f4f";
-                                                generalHandler.sendMessage(message);
+                                                drive.setBackgroundColor(Color.parseColor("#2f4f4f"));
                                             }
                                         }
                                     }
@@ -272,31 +264,9 @@ public class ObjectTrackerActivity extends Camera2Activity
                         }
 
                         break;
-
-                    case START_FLASHING:
-                        startFlashingARElements(driveRoot,drivesList);
-                        break;
-                    case STOP_FLASHING:
-                        stopFlashingARElements(driveRoot,drivesList);
-                        break;
-                    case ARELEMENT_BACKGROUND_COLOR_CHANGE:
-
-                        String[] flashInfo = msg.obj.toString().split(":");
-                        String arElementName = flashInfo[0];
-                        int arElementColor = Color.parseColor(flashInfo[1]);
-
-                        for (ARPlanElement arPlanElement : drivesList){
-                            if(arPlanElement.getUIName().equals(arElementName)){
-                                arPlanElement.setBackgroundColor(arElementColor);
-                            }
-                        }
-
-                        break;
-
                     case HIDE_ARPLANELEMENTS:
 
                             hideARPlanElements(driveRoot,drivesList);
-
                         break;
                     case SHOW_ARPLANELEMENTS:
 
@@ -317,20 +287,6 @@ public class ObjectTrackerActivity extends Camera2Activity
         };
     }
 
-    private void stopFlashingARElements(ARPlanElement driveRoot, ArrayList<ARPlanElement> drivesList) {
-        //driveRoot.stopFlasherThread();
-        for (ARPlanElement arPlanElement : drivesList){
-            arPlanElement.stopFlasherThread();
-            arPlanElement.join();
-        }
-    }
-
-    private void startFlashingARElements(ARPlanElement driveRoot, ArrayList<ARPlanElement> drivesList) {
-        //driveRoot.startFlasherThread();
-        for (ARPlanElement arPlanElement : drivesList){
-            arPlanElement.startFlasherThread();
-        }
-    }
 
     @Override
     public void createNewProcessor() {

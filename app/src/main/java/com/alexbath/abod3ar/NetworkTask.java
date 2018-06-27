@@ -45,6 +45,7 @@ public class NetworkTask implements Runnable {
 
                 Thread.sleep(pollInterval);
 
+                System.out.println(request);
                 out.println(request);
                 try {
                     response = br.readLine();
