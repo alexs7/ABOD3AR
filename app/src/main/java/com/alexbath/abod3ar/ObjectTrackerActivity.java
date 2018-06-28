@@ -7,7 +7,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -88,6 +87,7 @@ public class ObjectTrackerActivity extends Camera2Activity
     private int serverPort;
     private ExecutorService networkExecutor = null;
     private NetworkTask networkTask = null;
+    private ArrayList<ARPlanElement> elementsList;
 
     public enum TrackerType { // TODO: add the others later
         CIRCULANT,MEAN_SHIFT_LIKELIHOOD,MEAN_SHIFT
@@ -113,7 +113,7 @@ public class ObjectTrackerActivity extends Camera2Activity
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
         planName = "plans/DiaPlan3.inst";
-        serverIPAddress = "138.38.166.202";
+        serverIPAddress = "192.168.178.21";
         serverPort = 3001;
 
         createGeneralHandler();
@@ -205,11 +205,16 @@ public class ObjectTrackerActivity extends Camera2Activity
 
                     arPlanElement.getView().setOnClickListener(new View.OnClickListener() {
                         ARPlanElement localArPlanElement = arPlanElement;
+                        String triggeredElementName = null;
 
                         public void onClick(View v) {
                             //change request
                             PlanElement triggeredElement = localArPlanElement.getDriveCollection().getTriggeredElement();
                             if(triggeredElement != null) {
+                                triggeredElementName = triggeredElement.getNameOfElement();
+                                ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), null, Color.RED);
+                                arPlanElement.setUIName(driveCollection.getNameOfElement());
+                                elementsList.add(arPlanElement);
                             }
 //                            showARElements = false;
 //                            statusTextView.append("\n Looking at Drive: " + localArPlanElement.getUIName());
