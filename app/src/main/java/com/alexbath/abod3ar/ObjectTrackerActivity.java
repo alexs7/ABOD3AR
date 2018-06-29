@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import boofcv.abst.tracker.ConfigComaniciu2003;
@@ -87,7 +88,7 @@ public class ObjectTrackerActivity extends Camera2Activity
     private int serverPort;
     private ExecutorService networkExecutor = null;
     private NetworkTask networkTask = null;
-    private ArrayList<ARPlanElement> elementsList;
+    private ScheduledExecutorService serverPingerScheduler;
 
     public enum TrackerType { // TODO: add the others later
         CIRCULANT,MEAN_SHIFT_LIKELIHOOD,MEAN_SHIFT
@@ -167,10 +168,11 @@ public class ObjectTrackerActivity extends Camera2Activity
                 if(drivesList != null) {
 
                     if(networkExecutor == null) {
+
                         //create executor and start that will get the server requests
                         networkExecutor = Executors.newSingleThreadExecutor();
-                        networkTask = new NetworkTask(serverIPAddress, serverPort);
-                        networkTask.setHandler(generalHandler);
+                        serverPingerScheduler = Executors.newScheduledThreadPool(1);
+                        networkTask = new NetworkTask(serverIPAddress, serverPort, generalHandler, serverPingerScheduler);
                         networkExecutor.execute(networkTask);
 
                     }else{
@@ -214,7 +216,6 @@ public class ObjectTrackerActivity extends Camera2Activity
                                 triggeredElementName = triggeredElement.getNameOfElement();
                                 ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), null, Color.RED);
                                 arPlanElement.setUIName(driveCollection.getNameOfElement());
-                                elementsList.add(arPlanElement);
                             }
 //                            showARElements = false;
 //                            statusTextView.append("\n Looking at Drive: " + localArPlanElement.getUIName());
@@ -364,7 +365,7 @@ public class ObjectTrackerActivity extends Camera2Activity
         return true;
     }
 
-    private boolean stopNetworkTask(ExecutorService service) {
+    private boolean stopExecutorService(ExecutorService service) {
 
         if(service == null){
             return false;
@@ -375,7 +376,7 @@ public class ObjectTrackerActivity extends Camera2Activity
                     service.shutdownNow();
                 }
             } catch (InterruptedException e) {
-                System.out.println("stopNetworkTask() throwed " + e.getMessage());
+                System.out.println("stopExecutorService() throwed " + e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -575,7 +576,7 @@ public class ObjectTrackerActivity extends Camera2Activity
     }
 
     public void resetPressed() {
-        stopNetworkTask(networkExecutor);
+        stopExecutorService(serverPingerScheduler);
         generalHandler.removeCallbacksAndMessages(null);
 //        stopFlashingARElements(driveRoot,drivesList);
         removeARPlanElements(rootLayout,driveRoot,drivesList);
@@ -586,7 +587,7 @@ public class ObjectTrackerActivity extends Camera2Activity
     protected void onStop() {
         super.onStop();
 
-        stopNetworkTask(networkExecutor);
+        stopExecutorService(serverPingerScheduler);
         generalHandler.removeCallbacksAndMessages(null);
     }
 
