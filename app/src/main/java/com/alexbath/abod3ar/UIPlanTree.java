@@ -69,20 +69,14 @@ class UIPlanTree {
                     paint);
 
             if(highLevel){
+
                 for (int j = 0; j < root.getChildren().get(i).getChildren().size(); j++) {
+
                     float xVchild = (float) (root.getChildren().get(i).getData().getView().getX() - (root.getChildren().get(i).getChildren().get(j).getData().getView().getWidth() - root.getChildren().get(i).getData().getView().getWidth())/2); //+ 100 * Math.cos(Math.PI / root.getChildren().get(i).getChildren().size() * (2*j + 1)));
-                    float yVchild = (float) (root.getChildren().get(i).getData().getView().getY() + root.getChildren().get(i).getChildren().get(j).getData().getView().getHeight() + 20);//(root.getChildren().get(i).getChildren().get(j).getData().getView().getY() + 100 * Math.sin(Math.PI / root.getChildren().get(i).getChildren().size() * (2*j + 1)));
+                    float yVchild = (float) (root.getChildren().get(i).getData().getView().getY() + root.getChildren().get(i).getChildren().get(j).getData().getView().getHeight() - root.getChildren().get(i).getData().getView().getHeight()/3);//(root.getChildren().get(i).getChildren().get(j).getData().getView().getY() + 100 * Math.sin(Math.PI / root.getChildren().get(i).getChildren().size() * (2*j + 1)));
 
                     root.getChildren().get(i).getChildren().get(j).getData().getView().setX(xVchild);
                     root.getChildren().get(i).getChildren().get(j).getData().getView().setY(yVchild);
-
-                    drawLine(canvas,
-                            new Point2D_F64(
-                                    xV+ root.getChildren().get(i).getData().getView().getWidth()/2,
-                                    yV + root.getChildren().get(i).getData().getView().getHeight()/2),
-                            new Point2D_F64(xVchild + root.getChildren().get(i).getChildren().get(j).getData().getView().getWidth()/2,
-                                            yVchild + root.getChildren().get(i).getChildren().get(j).getData().getView().getHeight()/2),
-                            paint);
                 }
             }
 
