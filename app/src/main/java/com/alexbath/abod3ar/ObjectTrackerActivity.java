@@ -92,6 +92,7 @@ public class ObjectTrackerActivity extends Camera2Activity
     private UIPlanTree.Node<ARPlanElement> root;
     private UIPlanTree uiPlanTree;
     private boolean highLevelView;
+    private Button highLevelViewButton;
 
     public enum TrackerType { // TODO: add the others later
         CIRCULANT,MEAN_SHIFT_LIKELIHOOD,MEAN_SHIFT
@@ -132,6 +133,7 @@ public class ObjectTrackerActivity extends Camera2Activity
         connectToServerbutton = findViewById(R.id.connect_server_button);
         loadPlanButton = findViewById(R.id.load_plan_button);
         debugButton = findViewById(R.id.debug_mode);
+        highLevelViewButton = findViewById(R.id.high_level_mode);
 
         statusTextView.append("\n Select the Robot first!");
 
@@ -163,6 +165,19 @@ public class ObjectTrackerActivity extends Camera2Activity
                     statusTextView.setVisibility(View.VISIBLE);
                     serverTextView.setVisibility(View.VISIBLE);
                     reset_button.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+        highLevelViewButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(highLevelView){
+                    highLevelView = false;
+                    uiPlanTree.disableHighLevel(root);
+                }else{
+                    highLevelView = true;
+                    uiPlanTree.enableHighLevel(root);
                 }
             }
         });

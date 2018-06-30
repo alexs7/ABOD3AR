@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.support.constraint.ConstraintLayout;
+import android.view.View;
 
 import com.recklesscoding.abode.core.plan.planelements.PlanElement;
 import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
@@ -54,7 +55,7 @@ class UIPlanTree {
         root.getData().getView().setY((float) (center.y - root.getData().getView().getHeight()/2));
 
         for (int i = 0; i < root.getChildren().size(); i++) {
-            //TODO: 4 should be drivesList.size()!
+
             float xV = (float) (center.x + 290 * Math.cos(Math.PI / root.getChildren().size() * (2*i + 1)));
             float yV = (float) (center.y + 290 * Math.sin(Math.PI / root.getChildren().size() * (2*i + 1)));
 
@@ -78,6 +79,7 @@ class UIPlanTree {
                     root.getChildren().get(i).getChildren().get(j).getData().getView().setX(xVchild);
                     root.getChildren().get(i).getChildren().get(j).getData().getView().setY(yVchild);
                 }
+
             }
 
         }
@@ -85,6 +87,22 @@ class UIPlanTree {
 
     private void drawLine( Canvas canvas , Point2D_F64 a , Point2D_F64 b , Paint color ) {
         canvas.drawLine((float)a.x,(float)a.y,(float)b.x,(float)b.y,color);
+    }
+
+    public void disableHighLevel(Node<ARPlanElement> node) {
+        if(node.getChildren().isEmpty() && !node.getParent().equals(root)){
+            node.getData().getView().setVisibility(View.INVISIBLE);
+        }else{
+            node.getChildren().forEach(it -> disableHighLevel(it));
+        }
+    }
+
+    public void enableHighLevel(Node<ARPlanElement> node) {
+        if(node.getChildren().isEmpty() && !node.getParent().equals(root)){
+            node.getData().getView().setVisibility(View.VISIBLE);
+        }else{
+            node.getChildren().forEach(it -> enableHighLevel(it));
+        }
     }
 
     public class Node<T>{
