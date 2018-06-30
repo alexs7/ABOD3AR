@@ -75,8 +75,6 @@ public class ObjectTrackerActivity extends Camera2Activity
     private Button reset_button = null;
     private Button debugButton = null;
     private ConstraintLayout rootLayout = null;
-    private ArrayList<ARPlanElement> drivesList = null;
-    private ARPlanElement driveRoot = null;
     private boolean showARElements = false;
     private boolean showUI = false;
     private static final int SERVER_RESPONSE = 1;
@@ -89,8 +87,8 @@ public class ObjectTrackerActivity extends Camera2Activity
     private ExecutorService networkExecutor = null;
     private NetworkTask networkTask = null;
     private ScheduledExecutorService serverPingerScheduler;
-    private UIPlanTree.Node<ARPlanElement> root;
-    private UIPlanTree uiPlanTree;
+    private UIPlanTree.Node<ARPlanElement> root = null;
+    private UIPlanTree uiPlanTree = null;
     private boolean highLevelView;
     private Button highLevelViewButton;
 
@@ -120,7 +118,7 @@ public class ObjectTrackerActivity extends Camera2Activity
         planName = "plans/DiaPlan3.inst";
         serverIPAddress = "192.168.178.21";
         serverPort = 3001;
-        highLevelView = true;
+        highLevelView = false;
 
         createGeneralHandler();
 
@@ -183,8 +181,10 @@ public class ObjectTrackerActivity extends Camera2Activity
         });
 
         connectToServerbutton.setOnClickListener(new View.OnClickListener() {
+
             public void onClick(View v) {
-                if(drivesList != null || !drivesList.isEmpty()) {
+
+                if(uiPlanTree != null) {
 
                     if(networkExecutor == null) {
 
@@ -206,7 +206,7 @@ public class ObjectTrackerActivity extends Camera2Activity
 
         loadPlanButton.setOnClickListener(v -> {
 
-            if(driveRoot == null && drivesList == null) {
+            if( uiPlanTree == null) {
 
                 String fileName = planName;
                 List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
@@ -215,50 +215,6 @@ public class ObjectTrackerActivity extends Camera2Activity
                 uiPlanTree = new UIPlanTree(driveCollections,getApplicationContext());
                 root = uiPlanTree.getRoot();
                 uiPlanTree.addNodesToUI(rootLayout,root);
-
-                drivesList = new ArrayList<>();
-
-                driveRoot = new ARPlanElement(getApplicationContext(), null, Color.YELLOW);
-                rootLayout.addView(driveRoot.getView());
-
-                for (DriveCollection driveCollection : driveCollections) {
-
-                    ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), driveCollection.getNameOfElement(), Color.RED);
-
-                    drivesList.add(arPlanElement);
-                    rootLayout.addView(arPlanElement.getView());
-
-                    arPlanElement.getView().setOnClickListener(new View.OnClickListener() {
-                        ARPlanElement localArPlanElement = arPlanElement;
-                        String triggeredElementName = null;
-
-                        public void onClick(View v) {
-
-//                            removeARPlanElements(rootLayout,driveRoot,drivesList);
-//                            driveRoot = localArPlanElement;
-//                            rootLayout.addView(driveRoot.getView());
-//                            PlanElement triggeredElement = localArPlanElement.getDriveCollection().getTriggeredElement();
-//
-//                            if(triggeredElement != null) {
-//                                ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), driveCollection, Color.RED);
-//                                arPlanElement.setUIName(driveCollection.getNameOfElement());
-//                                drivesList.clear();
-//                                drivesList.add(arPlanElement);
-//                                //rootLayout.addView(arPlanElement.getView());
-//                            }
-//                            showARElements = false;
-//                            statusTextView.append("\n Looking at Drive: " + localArPlanElement.getUIName());
-//                            removeARPlanElements(rootLayout,driveRoot,drivesList);
-//                            drivesList.clear();
-//                            driveRoot = arPlanElement;
-//                            rootLayout.addView(driveRoot.getView());
-//                            drivesList.add(new ARPlanElement(getApplicationContext(), driveCollection.getTriggeredElement().getNameOfElement(), Color.RED));
-//                            showARElements = true;
-                            //TODO: change request
-                            //TODO: start network calls
-                        }
-                    });
-                }
 
                 showARElements = true;
             }
@@ -281,18 +237,18 @@ public class ObjectTrackerActivity extends Camera2Activity
                         break;
                     case HIDE_ARPLANELEMENTS:
 
-                            hideARPlanElements(driveRoot,drivesList);
+//                        hideARPlanElements(driveRoot,drivesList);
                         break;
                     case SHOW_ARPLANELEMENTS:
 
-                        if(driveRoot != null && (drivesList != null || !drivesList.isEmpty())) {
-
-                            driveRoot.getView().setVisibility(View.VISIBLE);
-
-                            for (ARPlanElement arPlanElement : drivesList) {
-                                arPlanElement.getView().setVisibility(View.VISIBLE);
-                            }
-                        }
+//                        if(driveRoot != null && (drivesList != null || !drivesList.isEmpty())) {
+//
+//                            driveRoot.getView().setVisibility(View.VISIBLE);
+//
+//                            for (ARPlanElement arPlanElement : drivesList) {
+//                                arPlanElement.getView().setVisibility(View.VISIBLE);
+//                            }
+//                        }
                         break;
 
                     default:
@@ -314,13 +270,13 @@ public class ObjectTrackerActivity extends Camera2Activity
                 planElement = getPlanElement(typeOfPlanElement, planElement, planElementName);
                 if (planElement != null) {
                     if(typeOfPlanElement.equals("D")){
-                        for (ARPlanElement drive : drivesList){
-                            if(drive.getUIName().equals(planElementName)){
-                                drive.setBackgroundColor(Color.parseColor("#0000ff"));
-                            }else{
-                                drive.setBackgroundColor(Color.parseColor("#2f4f4f"));
-                            }
-                        }
+//                        for (ARPlanElement drive : drivesList){
+//                            if(drive.getUIName().equals(planElementName)){
+//                                drive.setBackgroundColor(Color.parseColor("#0000ff"));
+//                            }else{
+//                                drive.setBackgroundColor(Color.parseColor("#2f4f4f"));
+//                            }
+//                        }
                     }else{
                         //System.out.println("NOT A DRIVE");
                     }
@@ -535,7 +491,7 @@ public class ObjectTrackerActivity extends Camera2Activity
 //                    drawLine(canvas,q.c,q.d,paintLine2);
 //                    drawLine(canvas,q.d,q.a,paintLine3);
 
-                    if(showARElements && driveRoot !=null & (drivesList != null || !drivesList.isEmpty())){
+                    if(showARElements && uiPlanTree != null){
 
                         uiPlanTree.renderPlan(canvas,root,center, highLevelView, paintLine3);
 
@@ -611,8 +567,6 @@ public class ObjectTrackerActivity extends Camera2Activity
     public void resetPressed() {
         stopExecutorService(serverPingerScheduler);
         generalHandler.removeCallbacksAndMessages(null);
-//        stopFlashingARElements(driveRoot,drivesList);
-        removeARPlanElements(rootLayout,driveRoot,drivesList);
         showARElements = false;
         mode = 0;
     }

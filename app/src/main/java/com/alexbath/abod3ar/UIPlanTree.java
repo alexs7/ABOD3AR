@@ -98,13 +98,14 @@ class UIPlanTree {
     }
 
     public void enableHighLevel(Node<ARPlanElement> node) {
-        if(node.getChildren().isEmpty() && !node.getParent().equals(root)){
+        if (node.getChildren().isEmpty() && !node.getParent().equals(root)) {
             node.getData().getView().setVisibility(View.VISIBLE);
-        }else{
+        } else {
             node.getChildren().forEach(it -> enableHighLevel(it));
         }
     }
 
+    
     public class Node<T>{
 
         private T data = null;
