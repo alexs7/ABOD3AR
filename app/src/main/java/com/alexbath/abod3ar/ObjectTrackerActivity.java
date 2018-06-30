@@ -89,6 +89,9 @@ public class ObjectTrackerActivity extends Camera2Activity
     private ExecutorService networkExecutor = null;
     private NetworkTask networkTask = null;
     private ScheduledExecutorService serverPingerScheduler;
+    private UIPlanTree.Node<ARPlanElement> root;
+    private UIPlanTree uiPlanTree;
+    private boolean highLevelView;
 
     public enum TrackerType { // TODO: add the others later
         CIRCULANT,MEAN_SHIFT_LIKELIHOOD,MEAN_SHIFT
@@ -114,8 +117,9 @@ public class ObjectTrackerActivity extends Camera2Activity
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
         planName = "plans/DiaPlan3.inst";
-        serverIPAddress = "138.38.165.212";
+        serverIPAddress = "192.168.178.21";
         serverPort = 3001;
+        highLevelView = true;
 
         createGeneralHandler();
 
@@ -192,6 +196,11 @@ public class ObjectTrackerActivity extends Camera2Activity
                 String fileName = planName;
                 List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
 
+                //createTree
+                uiPlanTree = new UIPlanTree(driveCollections,getApplicationContext());
+                root = uiPlanTree.getRoot();
+                uiPlanTree.addNodesToUI(rootLayout,root);
+
                 drivesList = new ArrayList<>();
 
                 driveRoot = new ARPlanElement(getApplicationContext(), null, Color.YELLOW);
@@ -199,8 +208,7 @@ public class ObjectTrackerActivity extends Camera2Activity
 
                 for (DriveCollection driveCollection : driveCollections) {
 
-                    ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), driveCollection, Color.RED);
-                    arPlanElement.setUIName(driveCollection.getNameOfElement());
+                    ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), driveCollection.getNameOfElement(), Color.RED);
 
                     drivesList.add(arPlanElement);
                     rootLayout.addView(arPlanElement.getView());
@@ -211,18 +219,18 @@ public class ObjectTrackerActivity extends Camera2Activity
 
                         public void onClick(View v) {
 
-                            removeARPlanElements(rootLayout,driveRoot,drivesList);
-                            driveRoot = localArPlanElement;
-                            rootLayout.addView(driveRoot.getView());
-                            PlanElement triggeredElement = localArPlanElement.getDriveCollection().getTriggeredElement();
-
-                            if(triggeredElement != null) {
-                                ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), driveCollection, Color.RED);
-                                arPlanElement.setUIName(driveCollection.getNameOfElement());
-                                drivesList.clear();
-                                drivesList.add(arPlanElement);
-                                //rootLayout.addView(arPlanElement.getView());
-                            }
+//                            removeARPlanElements(rootLayout,driveRoot,drivesList);
+//                            driveRoot = localArPlanElement;
+//                            rootLayout.addView(driveRoot.getView());
+//                            PlanElement triggeredElement = localArPlanElement.getDriveCollection().getTriggeredElement();
+//
+//                            if(triggeredElement != null) {
+//                                ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), driveCollection, Color.RED);
+//                                arPlanElement.setUIName(driveCollection.getNameOfElement());
+//                                drivesList.clear();
+//                                drivesList.add(arPlanElement);
+//                                //rootLayout.addView(arPlanElement.getView());
+//                            }
 //                            showARElements = false;
 //                            statusTextView.append("\n Looking at Drive: " + localArPlanElement.getUIName());
 //                            removeARPlanElements(rootLayout,driveRoot,drivesList);
@@ -513,22 +521,26 @@ public class ObjectTrackerActivity extends Camera2Activity
 //                    drawLine(canvas,q.d,q.a,paintLine3);
 
                     if(showARElements && driveRoot !=null & (drivesList != null || !drivesList.isEmpty())){
-                        driveRoot.getView().setX((float) (center.x - driveRoot.getView().getWidth()/2));
-                        driveRoot.getView().setY((float) (center.y - driveRoot.getView().getHeight()/2));
 
-                        for(int k = 0; k<drivesList.size(); k++){
+                        uiPlanTree.renderPlan(canvas,root,center, highLevelView, paintLine3);
 
-                            //TODO: 4 should be drivesList.size()!
-                            float xV = (float) (center.x + 290 * Math.cos(Math.PI / drivesList.size() * (2*k + 1)));
-                            float yV = (float) (center.y + 290 * Math.sin(Math.PI / drivesList.size() * (2*k + 1)));
 
-                            drivesList.get(k).getView().setX(Math.round(xV));
-                            drivesList.get(k).getView().setY(Math.round(yV));
-
-                            drawLine(canvas,new Point2D_F64(center.x,center.y),
-                                    new Point2D_F64(xV+ drivesList.get(k).getView().getWidth()/2,yV + drivesList.get(k).getView().getHeight()/2),paintLine3);
-
-                        }
+//                        driveRoot.getView().setX((float) (center.x - driveRoot.getView().getWidth()/2));
+//                        driveRoot.getView().setY((float) (center.y - driveRoot.getView().getHeight()/2));
+//
+//                        for(int k = 0; k<drivesList.size(); k++){
+//
+//                            //TODO: 4 should be drivesList.size()!
+//                            float xV = (float) (center.x + 290 * Math.cos(Math.PI / drivesList.size() * (2*k + 1)));
+//                            float yV = (float) (center.y + 290 * Math.sin(Math.PI / drivesList.size() * (2*k + 1)));
+//
+//                            drivesList.get(k).getView().setX(Math.round(xV));
+//                            drivesList.get(k).getView().setY(Math.round(yV));
+//
+//                            drawLine(canvas,new Point2D_F64(center.x,center.y),
+//                                    new Point2D_F64(xV+ drivesList.get(k).getView().getWidth()/2,yV + drivesList.get(k).getView().getHeight()/2),paintLine3);
+//
+//                        }
                     }
 
                 } else {

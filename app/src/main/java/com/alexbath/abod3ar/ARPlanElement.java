@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 class ARPlanElement {
 
-    private final DriveCollection driveCollection;
     private TextView element;
     private GradientDrawable drawableBackground;
 //    private GradientDrawable drawableForeground;
@@ -20,14 +19,10 @@ class ARPlanElement {
     private static final int ARELEMENT_BACKGROUND_COLOR_CHANGE = 3;
     private final AtomicBoolean running;
 
-    public ARPlanElement(Context applicationContext, DriveCollection driveCollection, int borderColor){
-        this.driveCollection = driveCollection;
+    public ARPlanElement(Context applicationContext, String name, int borderColor){
+        this.uIName = name;
         this.element = (TextView) View.inflate(applicationContext, R.layout.plan_element, null);
-        if(driveCollection == null) {
-            this.element.setText("Drives");
-        }else{
-            this.element.setText(driveCollection.getNameOfElement());
-        }
+        this.element.setText(uIName);
         this.drawableBackground = (GradientDrawable) element.getBackground();
 //        drawableForeground = (GradientDrawable) element.getForeground();
         this.drawableBackground.setStroke(2, borderColor);
@@ -46,15 +41,7 @@ class ARPlanElement {
 //        drawableForeground.setColor(color);
 //    }
 
-    public void setUIName(String UIName) {
-        this.uIName = UIName;
-    }
-
     public String getUIName() {
         return uIName;
-    }
-
-    public DriveCollection getDriveCollection() {
-        return driveCollection;
     }
 }
