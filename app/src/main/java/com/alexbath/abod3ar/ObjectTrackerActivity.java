@@ -114,7 +114,7 @@ public class ObjectTrackerActivity extends Camera2Activity
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
         planName = "plans/DiaPlan3.inst";
-        serverIPAddress = "192.168.178.21";
+        serverIPAddress = "138.38.165.212";
         serverPort = 3001;
 
         createGeneralHandler();
@@ -165,7 +165,7 @@ public class ObjectTrackerActivity extends Camera2Activity
 
         connectToServerbutton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                if(drivesList != null) {
+                if(drivesList != null || !drivesList.isEmpty()) {
 
                     if(networkExecutor == null) {
 
@@ -210,12 +210,18 @@ public class ObjectTrackerActivity extends Camera2Activity
                         String triggeredElementName = null;
 
                         public void onClick(View v) {
-                            //change request
+
+                            removeARPlanElements(rootLayout,driveRoot,drivesList);
+                            driveRoot = localArPlanElement;
+                            rootLayout.addView(driveRoot.getView());
                             PlanElement triggeredElement = localArPlanElement.getDriveCollection().getTriggeredElement();
+
                             if(triggeredElement != null) {
-                                triggeredElementName = triggeredElement.getNameOfElement();
-                                ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), null, Color.RED);
+                                ARPlanElement arPlanElement = new ARPlanElement(getApplicationContext(), driveCollection, Color.RED);
                                 arPlanElement.setUIName(driveCollection.getNameOfElement());
+                                drivesList.clear();
+                                drivesList.add(arPlanElement);
+                                //rootLayout.addView(arPlanElement.getView());
                             }
 //                            showARElements = false;
 //                            statusTextView.append("\n Looking at Drive: " + localArPlanElement.getUIName());
@@ -256,7 +262,7 @@ public class ObjectTrackerActivity extends Camera2Activity
                         break;
                     case SHOW_ARPLANELEMENTS:
 
-                        if(driveRoot != null && drivesList != null) {
+                        if(driveRoot != null && (drivesList != null || !drivesList.isEmpty())) {
 
                             driveRoot.getView().setVisibility(View.VISIBLE);
 
@@ -299,7 +305,6 @@ public class ObjectTrackerActivity extends Camera2Activity
             }
         }
     }
-
 
     @Override
     public void createNewProcessor() {
@@ -363,30 +368,6 @@ public class ObjectTrackerActivity extends Camera2Activity
             }
         }
         return true;
-    }
-
-    private boolean stopExecutorService(ExecutorService service) {
-
-        if(service == null){
-            return false;
-        }else {
-            service.shutdown();
-            try {
-                if (!service.awaitTermination(100, TimeUnit.MICROSECONDS)) {
-                    service.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                System.out.println("stopExecutorService() throwed " + e.getMessage());
-                e.printStackTrace();
-            }
-        }
-
-        if(service.isTerminated() && service.isShutdown()){
-            Log.i("NETWORK_TASK", "SUCCESSFULL SHUTDOWN OF NETWORK_TASK");
-            return true;
-        }else{
-            return false;
-        }
     }
 
     private int setTrackerType(TrackerType type) {
@@ -522,9 +503,8 @@ public class ObjectTrackerActivity extends Camera2Activity
 
             if( mode >= 2 ) {
                 if( visible ) {
-                    Quadrilateral_F64 q = location;
 
-                    updateCenter();
+                    center = updateCenter(location);
                     drawCenter(canvas,center,paintLine1);
 
 //                    drawLine(canvas,q.a,q.b,paintLine0);
@@ -532,7 +512,7 @@ public class ObjectTrackerActivity extends Camera2Activity
 //                    drawLine(canvas,q.c,q.d,paintLine2);
 //                    drawLine(canvas,q.d,q.a,paintLine3);
 
-                    if(showARElements){
+                    if(showARElements && driveRoot !=null & (drivesList != null || !drivesList.isEmpty())){
                         driveRoot.getView().setX((float) (center.x - driveRoot.getView().getWidth()/2));
                         driveRoot.getView().setY((float) (center.y - driveRoot.getView().getHeight()/2));
 
@@ -557,9 +537,11 @@ public class ObjectTrackerActivity extends Camera2Activity
             }
         }
 
-        private void updateCenter() {
+        private Point2D_F64 updateCenter(Quadrilateral_F64 location) {
             center.x = (location.c.x + location.a.x)/2;
             center.y = (location.c.y + location.a.y)/2;
+
+            return center;
         }
 
         @Override
@@ -572,6 +554,30 @@ public class ObjectTrackerActivity extends Camera2Activity
                 //surfaceLayout.setVisibility(View.INVISIBLE);
                 visible = tracker.process(input,location);
             }
+        }
+    }
+
+    private boolean stopExecutorService(ExecutorService service) {
+
+        if(service == null){
+            return false;
+        }else {
+            service.shutdown();
+            try {
+                if (!service.awaitTermination(100, TimeUnit.MICROSECONDS)) {
+                    service.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                System.out.println("stopExecutorService() throwed " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        if(service.isTerminated() && service.isShutdown()){
+            Log.i("NETWORK_TASK", "SUCCESSFULL SHUTDOWN OF NETWORK_TASK");
+            return true;
+        }else{
+            return false;
         }
     }
 
@@ -592,7 +598,7 @@ public class ObjectTrackerActivity extends Camera2Activity
     }
 
     private void hideARPlanElements(ARPlanElement driveRoot, ArrayList<ARPlanElement> drivesList) {
-        if(driveRoot != null && drivesList != null) {
+        if(driveRoot != null && (drivesList != null || !drivesList.isEmpty())) {
             driveRoot.getView().setVisibility(View.INVISIBLE);
 
             for (ARPlanElement arPlanElement : drivesList) {
@@ -602,7 +608,7 @@ public class ObjectTrackerActivity extends Camera2Activity
     }
 
     private void removeARPlanElements(ConstraintLayout rootLayout, ARPlanElement driveRoot, ArrayList<ARPlanElement> drivesList){
-        if(driveRoot != null && drivesList != null) {
+        if(driveRoot != null && (drivesList != null || !drivesList.isEmpty())) {
             rootLayout.removeView(driveRoot.getView());
             for (ARPlanElement arPlanElement : drivesList) {
                 rootLayout.removeView(arPlanElement.getView());
