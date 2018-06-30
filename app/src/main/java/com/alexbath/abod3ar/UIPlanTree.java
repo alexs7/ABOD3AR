@@ -31,6 +31,8 @@ class UIPlanTree {
             PlanElement triggeredElement = driveCollection.getTriggeredElement();
             if(triggeredElement != null){
                 child.addChild(new Node<>(new ARPlanElement(context, triggeredElement.getNameOfElement() , Color.GREEN)));
+                //quick hack to set level 2 elements to invisible
+                child.getChildren().get(0).getData().getView().setVisibility(View.INVISIBLE);
             }
         }
     }
@@ -105,7 +107,18 @@ class UIPlanTree {
         }
     }
 
-    
+    public void setNodeBackgroundColor(String planElementName, Node<ARPlanElement> node) {
+
+        if(node.getData().getUIName().equals(planElementName)){
+            node.getData().setBackgroundColor(Color.parseColor("#0000ff"));
+        }else{
+            node.getData().setBackgroundColor(Color.parseColor("#2f4f4f"));
+        }
+
+        node.getChildren().forEach(it -> setNodeBackgroundColor(planElementName, it));
+    }
+
+
     public class Node<T>{
 
         private T data = null;

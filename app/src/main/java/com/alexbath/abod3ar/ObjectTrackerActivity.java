@@ -269,7 +269,9 @@ public class ObjectTrackerActivity extends Camera2Activity
             if (!isActionPatternElement(typeOfPlanElement)) { //We ignore ActionPatternELements as they are instinct only
                 planElement = getPlanElement(typeOfPlanElement, planElement, planElementName);
                 if (planElement != null) {
-                    if(typeOfPlanElement.equals("D")){
+                    //if(typeOfPlanElement.equals("D")){
+
+                        uiPlanTree.setNodeBackgroundColor(planElementName,root);
 //                        for (ARPlanElement drive : drivesList){
 //                            if(drive.getUIName().equals(planElementName)){
 //                                drive.setBackgroundColor(Color.parseColor("#0000ff"));
@@ -277,9 +279,9 @@ public class ObjectTrackerActivity extends Camera2Activity
 //                                drive.setBackgroundColor(Color.parseColor("#2f4f4f"));
 //                            }
 //                        }
-                    }else{
-                        //System.out.println("NOT A DRIVE");
-                    }
+                   // }else{
+                     //   System.out.println("NOT A DRIVE");
+                   // }
                 }
             }
         }
