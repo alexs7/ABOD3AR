@@ -237,18 +237,9 @@ public class ObjectTrackerActivity extends Camera2Activity
                         break;
                     case HIDE_ARPLANELEMENTS:
 
-//                        hideARPlanElements(driveRoot,drivesList);
                         break;
                     case SHOW_ARPLANELEMENTS:
 
-//                        if(driveRoot != null && (drivesList != null || !drivesList.isEmpty())) {
-//
-//                            driveRoot.getView().setVisibility(View.VISIBLE);
-//
-//                            for (ARPlanElement arPlanElement : drivesList) {
-//                                arPlanElement.getView().setVisibility(View.VISIBLE);
-//                            }
-//                        }
                         break;
 
                     default:
@@ -269,19 +260,7 @@ public class ObjectTrackerActivity extends Camera2Activity
             if (!isActionPatternElement(typeOfPlanElement)) { //We ignore ActionPatternELements as they are instinct only
                 planElement = getPlanElement(typeOfPlanElement, planElement, planElementName);
                 if (planElement != null) {
-                    //if(typeOfPlanElement.equals("D")){
-
-                        uiPlanTree.setNodeBackgroundColor(planElementName,root);
-//                        for (ARPlanElement drive : drivesList){
-//                            if(drive.getUIName().equals(planElementName)){
-//                                drive.setBackgroundColor(Color.parseColor("#0000ff"));
-//                            }else{
-//                                drive.setBackgroundColor(Color.parseColor("#2f4f4f"));
-//                            }
-//                        }
-                   // }else{
-                     //   System.out.println("NOT A DRIVE");
-                   // }
+                    uiPlanTree.setNodeBackgroundColor(planElementName,root);
                 }
             }
         }
@@ -398,10 +377,6 @@ public class ObjectTrackerActivity extends Camera2Activity
             textPaint.setARGB(255, 200, 0, 0);
         }
 
-        private void drawLine( Canvas canvas , Point2D_F64 a , Point2D_F64 b , Paint color ) {
-            canvas.drawLine((float)a.x,(float)a.y,(float)b.x,(float)b.y,color);
-        }
-
         private void drawCenter(Canvas canvas, Point2D_F64 center, Paint color ) {
             canvas.drawPoint((float)center.x,(float)center.y, color);
         }
@@ -496,24 +471,6 @@ public class ObjectTrackerActivity extends Camera2Activity
                     if(showARElements && uiPlanTree != null){
 
                         uiPlanTree.renderPlan(canvas,root,center, highLevelView, paintLine3);
-
-
-//                        driveRoot.getView().setX((float) (center.x - driveRoot.getView().getWidth()/2));
-//                        driveRoot.getView().setY((float) (center.y - driveRoot.getView().getHeight()/2));
-//
-//                        for(int k = 0; k<drivesList.size(); k++){
-//
-//                            //TODO: 4 should be drivesList.size()!
-//                            float xV = (float) (center.x + 290 * Math.cos(Math.PI / drivesList.size() * (2*k + 1)));
-//                            float yV = (float) (center.y + 290 * Math.sin(Math.PI / drivesList.size() * (2*k + 1)));
-//
-//                            drivesList.get(k).getView().setX(Math.round(xV));
-//                            drivesList.get(k).getView().setY(Math.round(yV));
-//
-//                            drawLine(canvas,new Point2D_F64(center.x,center.y),
-//                                    new Point2D_F64(xV+ drivesList.get(k).getView().getWidth()/2,yV + drivesList.get(k).getView().getHeight()/2),paintLine3);
-//
-//                        }
                     }
 
                 } else {
@@ -578,25 +535,6 @@ public class ObjectTrackerActivity extends Camera2Activity
 
         stopExecutorService(serverPingerScheduler);
         generalHandler.removeCallbacksAndMessages(null);
-    }
-
-    private void hideARPlanElements(ARPlanElement driveRoot, ArrayList<ARPlanElement> drivesList) {
-        if(driveRoot != null && (drivesList != null || !drivesList.isEmpty())) {
-            driveRoot.getView().setVisibility(View.INVISIBLE);
-
-            for (ARPlanElement arPlanElement : drivesList) {
-                arPlanElement.getView().setVisibility(View.INVISIBLE);
-            }
-        }
-    }
-
-    private void removeARPlanElements(ConstraintLayout rootLayout, ARPlanElement driveRoot, ArrayList<ARPlanElement> drivesList){
-        if(driveRoot != null && (drivesList != null || !drivesList.isEmpty())) {
-            rootLayout.removeView(driveRoot.getView());
-            for (ARPlanElement arPlanElement : drivesList) {
-                rootLayout.removeView(arPlanElement.getView());
-            }
-        }
     }
 
     private boolean isValidLine(String[] splittedLine) {

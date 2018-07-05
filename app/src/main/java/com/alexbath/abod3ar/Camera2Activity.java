@@ -38,7 +38,7 @@ import georegression.struct.point.Point2D_F64;
  */
 public abstract class Camera2Activity extends VisualizeCamera2Activity {
 
-    private static final String TAG = "DemoCamera2";
+    private static final String TAG = "Camera2Activity";
 
     //######## Start variables owned by lock
     protected final Object lockProcessor = new Object();
