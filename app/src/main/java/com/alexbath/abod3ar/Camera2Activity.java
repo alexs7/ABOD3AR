@@ -22,11 +22,17 @@ import android.widget.Toast;
 
 import java.util.Locale;
 
+import boofcv.alg.color.ColorFormat;
 import boofcv.android.ConvertBitmap;
 import boofcv.android.camera2.VisualizeCamera2Activity;
+import boofcv.core.image.ConvertImage;
 import boofcv.misc.MovingAverage;
 import boofcv.struct.calib.CameraPinholeRadial;
+import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageBase;
+import boofcv.struct.image.ImageDataType;
+import boofcv.struct.image.ImageType;
+import boofcv.struct.image.Planar;
 import georegression.struct.point.Point2D_F64;
 
 /**
@@ -193,6 +199,45 @@ public abstract class Camera2Activity extends VisualizeCamera2Activity {
 //                        totalFramesProcessed,milliseconds,timeProcess,timeConvert,image.width,image.height));
             }
 
+        }        else{
+            long before = System.nanoTime();
+            try {
+
+                GrayU8 grayU8Image = new GrayU8(image.getWidth(),image.getHeight());
+                ConvertImage.average((Planar) image , grayU8Image);
+
+                processor.process(grayU8Image);
+            } catch( OutOfMemoryError e ) {
+                runOnUiThread(()->{
+                    finish(); // leave the activity
+                    Toast.makeText(this,"Out of Memory. Try lower resolution",Toast.LENGTH_LONG).show();
+                });
+                return;
+            }
+            long after = System.nanoTime();
+
+            double milliseconds = (after-before)*1e-6;
+
+//            double timeProcess,timeConvert;
+            synchronized (lockTiming) {
+                totalFramesProcessed++;
+                // give it a few frames to warm up
+                if( totalFramesProcessed >= TIMING_WARM_UP ) {
+                    periodProcess.update(milliseconds);
+                    triggerSlow |= periodProcess.getAverage() > TRIGGER_SLOW;
+                } else {
+                    // if things are extremely slow right off the bat abort and change resolution
+                    triggerSlow |= milliseconds >= TRIGGER_HORIBLY_SLOW;
+                }
+
+//                timeProcess = periodProcess.getAverage();
+//                timeConvert = periodConvert.getAverage();
+            }
+
+            if( verbose ) {
+//                Log.i("DemoTiming",String.format("Total Frames %4d curr %5.1f ave process %5.1f convert %5.1f at %dx%d",
+//                        totalFramesProcessed,milliseconds,timeProcess,timeConvert,image.width,image.height));
+            }
         }
 
     }
@@ -268,7 +313,8 @@ public abstract class Camera2Activity extends VisualizeCamera2Activity {
                 this.processor.stop();
             }
             // switch it over to the new one
-            setImageType(processor.getImageType(),processor.getColorFormat());
+            //setImageType(processor.getImageType(),processor.getColorFormat());
+            setImageType(new ImageType(ImageType.Family.PLANAR, ImageDataType.U8,3), ColorFormat.RGB);
             this.processor = processor;
 
             // If the camera is not initialized then all these values are not known. It will be

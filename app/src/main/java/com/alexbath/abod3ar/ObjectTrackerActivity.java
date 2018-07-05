@@ -48,8 +48,7 @@ import boofcv.struct.image.ImageType;
 import georegression.struct.point.Point2D_F64;
 import georegression.struct.point.Point2D_I32;
 import georegression.struct.shapes.Quadrilateral_F64;
-
-import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.MEAN_SHIFT;
+import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.TLD;
 
 /**
  * Allow the user to select an object in the image and then track it
@@ -93,11 +92,11 @@ public class ObjectTrackerActivity extends Camera2Activity
     private Button highLevelViewButton;
 
     public enum TrackerType { // TODO: add the others later
-        CIRCULANT,MEAN_SHIFT_LIKELIHOOD,MEAN_SHIFT
+        CIRCULANT,MEAN_SHIFT_LIKELIHOOD,MEAN_SHIFT,TLD,MEAN_SHIFT_SCALE,SPARSE_FLOW
     }
 
     public ObjectTrackerActivity() {
-        super(Resolution.R1920x1080);
+        super(Resolution.R640x480);
     }
 
     @Override
@@ -268,7 +267,7 @@ public class ObjectTrackerActivity extends Camera2Activity
 
     @Override
     public void createNewProcessor() {
-        startObjectTracking(setTrackerType(MEAN_SHIFT));
+        startObjectTracking(setTrackerType(TLD));
     }
 
     private void startObjectTracking(int pos) {
@@ -336,8 +335,14 @@ public class ObjectTrackerActivity extends Camera2Activity
                 return 0;
             case MEAN_SHIFT:
                 return 1;
+            case MEAN_SHIFT_SCALE:
+                return 2;
             case MEAN_SHIFT_LIKELIHOOD:
                 return 3;
+            case SPARSE_FLOW:
+                return 4;
+            case TLD:
+                return 5;
             default:
                 throw new IllegalArgumentException("Unknown");
         }
@@ -368,13 +373,17 @@ public class ObjectTrackerActivity extends Camera2Activity
             paintSelected.setARGB(0xFF/2,0xFF,0xFF,0);
             paintSelected.setStyle(Paint.Style.FILL_AND_STROKE);
 
-            paintLine0.setColor(Color.YELLOW);
-            paintLine1.setColor(Color.YELLOW);
+            paintLine0.setColor(Color.BLUE);
+            paintLine1.setColor(Color.GREEN);
             paintLine2.setColor(Color.YELLOW);
             paintLine3.setColor(Color.WHITE);
 
             // Create out paint to use for drawing
             textPaint.setARGB(255, 200, 0, 0);
+        }
+
+        private void drawLine( Canvas canvas , Point2D_F64 a , Point2D_F64 b , Paint color ) {
+            canvas.drawLine((float)a.x,(float)a.y,(float)b.x,(float)b.y,color);
         }
 
         private void drawCenter(Canvas canvas, Point2D_F64 center, Paint color ) {
@@ -463,10 +472,10 @@ public class ObjectTrackerActivity extends Camera2Activity
                     center = updateCenter(location);
                     drawCenter(canvas,center,paintLine1);
 
-//                    drawLine(canvas,q.a,q.b,paintLine0);
-//                    drawLine(canvas,q.b,q.c,paintLine1);
-//                    drawLine(canvas,q.c,q.d,paintLine2);
-//                    drawLine(canvas,q.d,q.a,paintLine3);
+                    drawLine(canvas,location.a,location.b,paintLine0);
+                    drawLine(canvas,location.b,location.c,paintLine1);
+                    drawLine(canvas,location.c,location.d,paintLine2);
+                    drawLine(canvas,location.d,location.a,paintLine3);
 
                     if(showARElements && uiPlanTree != null){
 
@@ -474,7 +483,7 @@ public class ObjectTrackerActivity extends Camera2Activity
                     }
 
                 } else {
-                    canvas.drawText("?",width/2,height/2,textPaint);
+                    canvas.drawText("X",width/2,height/2, textPaint);
                 }
             }
         }
