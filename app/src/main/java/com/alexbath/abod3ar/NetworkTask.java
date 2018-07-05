@@ -53,7 +53,7 @@ public class NetworkTask implements Runnable {
                 }
             };
 
-            serverPingerScheduler.scheduleAtFixedRate(pinger, 100, 50, TimeUnit.MILLISECONDS);
+            serverPingerScheduler.scheduleAtFixedRate(pinger, 100, 60, TimeUnit.MILLISECONDS);
 
         } catch (IOException e) {
             e.printStackTrace();

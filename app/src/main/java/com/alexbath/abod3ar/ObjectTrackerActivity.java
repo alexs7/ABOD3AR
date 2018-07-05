@@ -19,7 +19,6 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,7 +28,6 @@ import com.recklesscoding.abode.core.plan.planelements.PlanElement;
 import com.recklesscoding.abode.core.plan.planelements.action.ActionEvent;
 import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,6 +46,8 @@ import boofcv.struct.image.ImageType;
 import georegression.struct.point.Point2D_F64;
 import georegression.struct.point.Point2D_I32;
 import georegression.struct.shapes.Quadrilateral_F64;
+import mehdi.sakout.fancybuttons.FancyButton;
+
 import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.TLD;
 
 /**
@@ -67,12 +67,11 @@ public class ObjectTrackerActivity extends Camera2Activity
     private Point2D_I32 click0 = new Point2D_I32();
     private Point2D_I32 click1 = new Point2D_I32();
     private FrameLayout surfaceLayout = null;
-    private Button connectToServerbutton = null;
-    private Button loadPlanButton = null;
-    private TextView statusTextView = null;
+    private FancyButton connectToServerbutton = null;
+    private FancyButton loadPlanButton = null;
     private TextView serverTextView = null;
-    private Button reset_button = null;
-    private Button debugButton = null;
+    private FancyButton reset_button = null;
+    private FancyButton debugButton = null;
     private ConstraintLayout rootLayout = null;
     private boolean showARElements = false;
     private boolean showUI = false;
@@ -88,8 +87,6 @@ public class ObjectTrackerActivity extends Camera2Activity
     private ScheduledExecutorService serverPingerScheduler;
     private UIPlanTree.Node<ARPlanElement> root = null;
     private UIPlanTree uiPlanTree = null;
-    private boolean highLevelView;
-    private Button highLevelViewButton;
 
     public enum TrackerType { // TODO: add the others later
         CIRCULANT,MEAN_SHIFT_LIKELIHOOD,MEAN_SHIFT,TLD,MEAN_SHIFT_SCALE,SPARSE_FLOW
@@ -114,25 +111,19 @@ public class ObjectTrackerActivity extends Camera2Activity
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
-        planName = "plans/DiaPlan3.inst";
-        serverIPAddress = "192.168.178.21";
+        planName = "plans/Plan6.inst";
+        serverIPAddress = "192.168.0.101";
         serverPort = 3001;
-        highLevelView = false;
 
         createGeneralHandler();
 
         rootLayout = findViewById(R.id.root_layout);
         surfaceLayout = findViewById(R.id.camera_frame_layout);
-        statusTextView = (TextView) findViewById(R.id.status_text);
-        statusTextView.setMovementMethod(new ScrollingMovementMethod());
         serverTextView = (TextView) findViewById(R.id.server_response);
         serverTextView.setMovementMethod(new ScrollingMovementMethod());
         connectToServerbutton = findViewById(R.id.connect_server_button);
         loadPlanButton = findViewById(R.id.load_plan_button);
-        debugButton = findViewById(R.id.debug_mode);
-        highLevelViewButton = findViewById(R.id.high_level_mode);
-
-        statusTextView.append("\n Select the Robot first!");
+        debugButton = findViewById(R.id.debug_mode_button);
 
         startCamera(surfaceLayout,null);
         displayView.setOnTouchListener(this);
@@ -151,7 +142,6 @@ public class ObjectTrackerActivity extends Camera2Activity
                     serverTextView.setVisibility(View.INVISIBLE);
                     connectToServerbutton.setVisibility(View.INVISIBLE);
                     loadPlanButton.setVisibility(View.INVISIBLE);
-                    statusTextView.setVisibility(View.INVISIBLE);
                     serverTextView.setVisibility(View.INVISIBLE);
                     reset_button.setVisibility(View.INVISIBLE);
                 }else{
@@ -159,22 +149,8 @@ public class ObjectTrackerActivity extends Camera2Activity
                     serverTextView.setVisibility(View.VISIBLE);
                     connectToServerbutton.setVisibility(View.VISIBLE);
                     loadPlanButton.setVisibility(View.VISIBLE);
-                    statusTextView.setVisibility(View.VISIBLE);
                     serverTextView.setVisibility(View.VISIBLE);
                     reset_button.setVisibility(View.VISIBLE);
-                }
-            }
-        });
-
-        highLevelViewButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(highLevelView){
-                    highLevelView = false;
-                    uiPlanTree.disableHighLevel(root);
-                }else{
-                    highLevelView = true;
-                    uiPlanTree.enableHighLevel(root);
                 }
             }
         });
@@ -198,7 +174,6 @@ public class ObjectTrackerActivity extends Camera2Activity
                     }
 
                 }else {
-                    statusTextView.append("\n Load a Plan first!");
                 }
             }
         });
@@ -354,13 +329,13 @@ public class ObjectTrackerActivity extends Camera2Activity
         boolean visible;
 
         Quadrilateral_F64 location = new Quadrilateral_F64();
-        Point2D_F64 center = new Point2D_F64();
 
         Paint paintSelected = new Paint();
-        Paint paintLine0 = new Paint();
-        Paint paintLine1 = new Paint();
-        Paint paintLine2 = new Paint();
-        Paint paintLine3 = new Paint();
+        Paint bluePaint = new Paint();
+        Paint greenPaint = new Paint();
+        Paint yellowPaint = new Paint();
+        Paint whitePaint = new Paint();
+        Paint redPaint = new Paint();
         private Paint textPaint = new Paint();
 
         int width,height;
@@ -373,10 +348,11 @@ public class ObjectTrackerActivity extends Camera2Activity
             paintSelected.setARGB(0xFF/2,0xFF,0xFF,0);
             paintSelected.setStyle(Paint.Style.FILL_AND_STROKE);
 
-            paintLine0.setColor(Color.BLUE);
-            paintLine1.setColor(Color.GREEN);
-            paintLine2.setColor(Color.YELLOW);
-            paintLine3.setColor(Color.WHITE);
+            bluePaint.setColor(Color.BLUE);
+            greenPaint.setColor(Color.GREEN);
+            yellowPaint.setColor(Color.YELLOW);
+            whitePaint.setColor(Color.WHITE);
+            redPaint.setColor(Color.RED);
 
             // Create out paint to use for drawing
             textPaint.setARGB(255, 200, 0, 0);
@@ -384,10 +360,6 @@ public class ObjectTrackerActivity extends Camera2Activity
 
         private void drawLine( Canvas canvas , Point2D_F64 a , Point2D_F64 b , Paint color ) {
             canvas.drawLine((float)a.x,(float)a.y,(float)b.x,(float)b.y,color);
-        }
-
-        private void drawCenter(Canvas canvas, Point2D_F64 center, Paint color ) {
-            canvas.drawPoint((float)center.x,(float)center.y, color);
         }
 
         private void makeInBounds( Point2D_F64 p ) {
@@ -416,10 +388,11 @@ public class ObjectTrackerActivity extends Camera2Activity
 
             float density = cameraToDisplayDensity;
             paintSelected.setStrokeWidth(5f*density);
-            paintLine0.setStrokeWidth(5f*density);
-            paintLine1.setStrokeWidth(5f*density);
-            paintLine2.setStrokeWidth(5f*density);
-            paintLine3.setStrokeWidth(2.5f*density);
+            bluePaint.setStrokeWidth(5f*density);
+            greenPaint.setStrokeWidth(5f*density);
+            yellowPaint.setStrokeWidth(5f*density);
+            whitePaint.setStrokeWidth(2.5f*density);
+            redPaint.setStrokeWidth(2.5f*density);
             textPaint.setTextSize(60*density);
         }
 
@@ -469,17 +442,53 @@ public class ObjectTrackerActivity extends Camera2Activity
             if( mode >= 2 ) {
                 if( visible ) {
 
-                    center = updateCenter(location);
-                    drawCenter(canvas,center,paintLine1);
-
-                    drawLine(canvas,location.a,location.b,paintLine0);
-                    drawLine(canvas,location.b,location.c,paintLine1);
-                    drawLine(canvas,location.c,location.d,paintLine2);
-                    drawLine(canvas,location.d,location.a,paintLine3);
+//                    drawLine(canvas,location.a,location.b, bluePaint);
+//                    drawLine(canvas,location.b,location.c, greenPaint);
+//                    drawLine(canvas,location.c,location.d, yellowPaint);
+//                    drawLine(canvas,location.d,location.a, whitePaint);
 
                     if(showARElements && uiPlanTree != null){
 
-                        uiPlanTree.renderPlan(canvas,root,center, highLevelView, paintLine3);
+                        root = uiPlanTree.getRoot();
+
+                        Point2D_F64 imageCenter = getImageCenter(location);
+                        //view = canvas
+                        Point2D_F64 viewCenter = getViewCenter(location, imageToView);
+                        int childrenHeight = 0;
+
+                        root.getData().getView().setX((float) (viewCenter.x - root.getData().getView().getWidth()/2));
+                        root.getData().getView().setY((float) (viewCenter.y - root.getData().getView().getHeight()/2));
+
+                        for (int i = 0; i < root.getChildren().size(); i++) {
+                            childrenHeight += root.getChildren().get(i).getData().getView().getHeight();
+                        }
+
+                        for (int i = 0; i < root.getChildren().size(); i++) {
+
+                            UIPlanTree.Node<ARPlanElement> child = root.getChildren().get(i);
+
+                            child.getData().getView().setX(root.getData().getView().getX() + root.getData().getView().getWidth() + 14);
+                            child.getData().getView().setY(root.getData().getView().getY() - (childrenHeight/2 - (child.getData().getView().getHeight() + 24) * i));
+
+                            Point2D_F64 childAnchor = new Point2D_F64();
+                            applyToPoint(viewToImage, child.getData().getView().getX(),child.getData().getView().getY() + child.getData().getView().getHeight()/2,childAnchor);
+                            drawLine(canvas, new Point2D_F64(imageCenter.x,imageCenter.y), childAnchor, redPaint);
+
+                            for (int j = 0; j < child.getChildren().size(); j++) {
+
+                                UIPlanTree.Node<ARPlanElement> grandChild = child.getChildren().get(j);
+
+                                if(grandChild.getData().getView().getVisibility() == View.VISIBLE) {
+                                    grandChild.getData().getView().setX(child.getData().getView().getX() + child.getData().getView().getWidth() + 14);
+                                    grandChild.getData().getView().setY(child.getData().getView().getY());
+
+                                    Point2D_F64 grandChildAnchor = new Point2D_F64();
+                                    applyToPoint(viewToImage, grandChild.getData().getView().getX(), grandChild.getData().getView().getY() + grandChild.getData().getView().getHeight() / 2, grandChildAnchor);
+                                    drawLine(canvas, childAnchor, grandChildAnchor, greenPaint);
+                                }
+                            }
+                        }
+
                     }
 
                 } else {
@@ -488,9 +497,23 @@ public class ObjectTrackerActivity extends Camera2Activity
             }
         }
 
-        private Point2D_F64 updateCenter(Quadrilateral_F64 location) {
-            center.x = (location.c.x + location.a.x)/2;
-            center.y = (location.c.y + location.a.y)/2;
+        private Point2D_F64 getImageCenter(Quadrilateral_F64 location){
+            double x = (location.c.x + location.a.x)/2;
+            double y = (location.c.y + location.a.y)/2;
+
+            Point2D_F64 point = new Point2D_F64();
+            point.x = x;
+            point.y = y;
+
+            return point;
+        }
+
+        private Point2D_F64 getViewCenter(Quadrilateral_F64 location, Matrix imageToView) {
+            double x = (location.c.x + location.a.x)/2;
+            double y = (location.c.y + location.a.y)/2;
+
+            Point2D_F64 center = new Point2D_F64();
+            applyToPoint(imageToView, x, y, center);
 
             return center;
         }

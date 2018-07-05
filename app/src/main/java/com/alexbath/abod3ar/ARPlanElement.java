@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 class ARPlanElement {
 
+    private final String name;
     private TextView element;
     private GradientDrawable drawableBackground;
 //    private GradientDrawable drawableForeground;
@@ -19,8 +20,16 @@ class ARPlanElement {
     private static final int ARELEMENT_BACKGROUND_COLOR_CHANGE = 3;
     private final AtomicBoolean running;
 
-    public ARPlanElement(Context applicationContext, String name, int borderColor){
-        this.uIName = name;
+    public ARPlanElement(Context applicationContext, int priority, String name, int borderColor){
+
+        this.name = name;
+
+        if(priority != 0){
+            this.uIName = Integer.toString(priority)+": "+name;
+        }else{
+            this.uIName = name;
+        }
+
         this.element = (TextView) View.inflate(applicationContext, R.layout.plan_element, null);
         this.element.setText(uIName);
         this.drawableBackground = (GradientDrawable) element.getBackground();
@@ -43,5 +52,9 @@ class ARPlanElement {
 
     public String getUIName() {
         return uIName;
+    }
+
+    public String getName(){
+        return name;
     }
 }
