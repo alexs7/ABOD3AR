@@ -25,14 +25,20 @@ class UIPlanTree {
 
         for (int i = 0; i < driveCollections.size(); i++) {
 
+            String drivePriority = Integer.toString(i+1);
+
             DriveCollection driveCollection = driveCollections.get(i);
-            Node<ARPlanElement> child = root.addChild(new Node<>(new ARPlanElement(context, driveCollection.getNameOfElement(), Color.RED)));
+            Node<ARPlanElement> child = root.addChild(new Node<>(new ARPlanElement(context, "P"+drivePriority+ ": " +driveCollection.getNameOfElement(), Color.RED)));
 
             PlanElement triggeredElement = driveCollection.getTriggeredElement();
             if(triggeredElement != null){
                 child.addChild(new Node<>(new ARPlanElement(context, triggeredElement.getNameOfElement() , Color.GREEN)));
                 //quick hack to set level 2 elements to invisible
                 child.getChildren().get(0).getData().getView().setVisibility(View.INVISIBLE);
+
+                child.getData().getView().setOnClickListener(v -> {
+                    //System.out.println(root.getChildren().get(0).getData().getView().getX());
+                });
             }
         }
     }
