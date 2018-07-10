@@ -27,6 +27,7 @@ import com.recklesscoding.abode.core.plan.Plan;
 import com.recklesscoding.abode.core.plan.planelements.PlanElement;
 import com.recklesscoding.abode.core.plan.planelements.action.ActionEvent;
 import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
+import com.recklesscoding.abode.core.plan.planelements.drives.DriveElement;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -170,6 +171,9 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                 //createTree
                 uiPlanTree = new UIPlanTree(driveCollections,getApplicationContext());
                 root = uiPlanTree.getRoot();
+
+                uiPlanTree.addNodes(root,driveCollections, getApplicationContext());
+
                 uiPlanTree.addNodesToUI(rootLayout,root);
 
             }
