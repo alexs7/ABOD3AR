@@ -19,7 +19,6 @@ import georegression.struct.point.Point2D_F64;
 class UIPlanTree {
 
     public Node<ARPlanElement> root = null;
-    final float pts[] = new float[2];
 
     public UIPlanTree(List<DriveCollection> driveCollections, Context context) {
 
@@ -65,6 +64,11 @@ class UIPlanTree {
     public void addNodesToUI(ConstraintLayout rootLayout, Node<ARPlanElement> node) {
         rootLayout.addView(node.getData().getView());
         node.getChildren().forEach(it -> addNodesToUI(rootLayout,it));
+    }
+
+    public void removeNodesFromUI(ConstraintLayout rootLayout, Node<ARPlanElement> node) {
+        rootLayout.removeView(node.getData().getView());
+        node.getChildren().forEach(it -> removeNodesFromUI(rootLayout,it));
     }
 
     public void setNodeBackgroundColor(String planElementName, Node<ARPlanElement> node) {

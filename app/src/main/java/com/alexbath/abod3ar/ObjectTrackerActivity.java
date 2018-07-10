@@ -47,20 +47,11 @@ import georegression.struct.point.Point2D_F64;
 import georegression.struct.point.Point2D_I32;
 import georegression.struct.shapes.Quadrilateral_F64;
 import mehdi.sakout.fancybuttons.FancyButton;
-
 import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.TLD;
 
-/**
- * Allow the user to select an object in the image and then track it
- *
- * @author Peter Abeles
- */
-public class ObjectTrackerActivity extends Camera2Activity
-        implements View.OnTouchListener
-{
+public class ObjectTrackerActivity extends Camera2Activity implements View.OnTouchListener {
 
     private int mode = 0;
-
     // size of the minimum square which the user can select
     private final static int MINIMUM_MOTION = 20;
 
@@ -71,10 +62,9 @@ public class ObjectTrackerActivity extends Camera2Activity
     private FancyButton loadPlanButton = null;
     private TextView serverTextView = null;
     private FancyButton reset_button = null;
-    private FancyButton debugButton = null;
+    private FancyButton showServerDataButton = null;
     private ConstraintLayout rootLayout = null;
-    private boolean showARElements = false;
-    private boolean showUI = false;
+    private boolean showServerData = false;
     private static final int SERVER_RESPONSE = 1;
     private static final int HIDE_ARPLANELEMENTS = 6;
     private static final int SHOW_ARPLANELEMENTS = 7;
@@ -111,8 +101,8 @@ public class ObjectTrackerActivity extends Camera2Activity
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
-        planName = "plans/Plan6.inst";
-        serverIPAddress = "192.168.0.101";
+        planName = "plans/DiaPlan3.inst";
+        serverIPAddress = "138.38.187.68";
         serverPort = 3001;
 
         createGeneralHandler();
@@ -120,10 +110,11 @@ public class ObjectTrackerActivity extends Camera2Activity
         rootLayout = findViewById(R.id.root_layout);
         surfaceLayout = findViewById(R.id.camera_frame_layout);
         serverTextView = (TextView) findViewById(R.id.server_response);
+        serverTextView.setVisibility(View.INVISIBLE);
         serverTextView.setMovementMethod(new ScrollingMovementMethod());
         connectToServerbutton = findViewById(R.id.connect_server_button);
         loadPlanButton = findViewById(R.id.load_plan_button);
-        debugButton = findViewById(R.id.debug_mode_button);
+        showServerDataButton = findViewById(R.id.show_server_data);
 
         startCamera(surfaceLayout,null);
         displayView.setOnTouchListener(this);
@@ -131,26 +122,18 @@ public class ObjectTrackerActivity extends Camera2Activity
         reset_button = findViewById(R.id.reset_button);
         reset_button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                resetPressed();
+                reset();
             }
         });
 
-        debugButton.setOnClickListener(new View.OnClickListener() {
+        showServerDataButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                if(showUI) {
-                    showUI = false;
+                if(showServerData) {
+                    showServerData = false;
                     serverTextView.setVisibility(View.INVISIBLE);
-                    connectToServerbutton.setVisibility(View.INVISIBLE);
-                    loadPlanButton.setVisibility(View.INVISIBLE);
-                    serverTextView.setVisibility(View.INVISIBLE);
-                    reset_button.setVisibility(View.INVISIBLE);
                 }else{
-                    showUI = true;
+                    showServerData = true;
                     serverTextView.setVisibility(View.VISIBLE);
-                    connectToServerbutton.setVisibility(View.VISIBLE);
-                    loadPlanButton.setVisibility(View.VISIBLE);
-                    serverTextView.setVisibility(View.VISIBLE);
-                    reset_button.setVisibility(View.VISIBLE);
                 }
             }
         });
@@ -182,15 +165,13 @@ public class ObjectTrackerActivity extends Camera2Activity
 
             if( uiPlanTree == null) {
 
-                String fileName = planName;
-                List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(fileName, getApplicationContext());
+                List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(planName, getApplicationContext());
 
                 //createTree
                 uiPlanTree = new UIPlanTree(driveCollections,getApplicationContext());
                 root = uiPlanTree.getRoot();
                 uiPlanTree.addNodesToUI(rootLayout,root);
 
-                showARElements = true;
             }
         });
 
@@ -204,15 +185,11 @@ public class ObjectTrackerActivity extends Camera2Activity
                 switch (msg.what){
                     case SERVER_RESPONSE:
 
-                        serverTextView.append("\n"+msg.obj);
+                        if(serverTextView.getVisibility() == View.VISIBLE) {
+                            serverTextView.append("\n" + msg.obj);
+                        }
 
                         updateARElementsVisuals(msg);
-
-                        break;
-                    case HIDE_ARPLANELEMENTS:
-
-                        break;
-                    case SHOW_ARPLANELEMENTS:
 
                         break;
 
@@ -237,6 +214,45 @@ public class ObjectTrackerActivity extends Camera2Activity
                     uiPlanTree.setNodeBackgroundColor(planElementName,root);
                 }
             }
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        reset();
+    }
+
+    public void reset() {
+        stopExecutorService(serverPingerScheduler);
+        generalHandler.removeCallbacksAndMessages(null);
+        uiPlanTree.removeNodesFromUI(rootLayout,root);
+        root = null;
+        uiPlanTree = null;
+        mode = 0;
+    }
+
+    private boolean stopExecutorService(ExecutorService service) {
+
+        if(service == null){
+            return false;
+        }else {
+            service.shutdown();
+            try {
+                if (!service.awaitTermination(100, TimeUnit.MICROSECONDS)) {
+                    service.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                System.out.println("stopExecutorService() throwed " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        if(service.isTerminated() && service.isShutdown()){
+            Log.i("NETWORK_TASK", "SUCCESSFULL SHUTDOWN OF NETWORK_TASK");
+            return true;
+        }else{
+            return false;
         }
     }
 
@@ -447,7 +463,7 @@ public class ObjectTrackerActivity extends Camera2Activity
 //                    drawLine(canvas,location.c,location.d, yellowPaint);
 //                    drawLine(canvas,location.d,location.a, whitePaint);
 
-                    if(showARElements && uiPlanTree != null){
+                    if(uiPlanTree != null){
 
                         root = uiPlanTree.getRoot();
 
@@ -529,44 +545,6 @@ public class ObjectTrackerActivity extends Camera2Activity
                 visible = tracker.process(input,location);
             }
         }
-    }
-
-    private boolean stopExecutorService(ExecutorService service) {
-
-        if(service == null){
-            return false;
-        }else {
-            service.shutdown();
-            try {
-                if (!service.awaitTermination(100, TimeUnit.MICROSECONDS)) {
-                    service.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                System.out.println("stopExecutorService() throwed " + e.getMessage());
-                e.printStackTrace();
-            }
-        }
-
-        if(service.isTerminated() && service.isShutdown()){
-            Log.i("NETWORK_TASK", "SUCCESSFULL SHUTDOWN OF NETWORK_TASK");
-            return true;
-        }else{
-            return false;
-        }
-    }
-
-    public void resetPressed() {
-        stopExecutorService(serverPingerScheduler);
-        generalHandler.removeCallbacksAndMessages(null);
-        showARElements = false;
-        mode = 0;
-    }
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        stopExecutorService(serverPingerScheduler);
-        generalHandler.removeCallbacksAndMessages(null);
     }
 
     private boolean isValidLine(String[] splittedLine) {
