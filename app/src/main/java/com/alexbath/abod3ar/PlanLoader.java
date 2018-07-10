@@ -11,10 +11,10 @@ import java.util.List;
 class PlanLoader {
 
     public static List<DriveCollection> loadPlanFile(String fileName, Context applicationContext) {
+        Plan.getInstance().cleanAllLists();
         InstPlanReader planReader = new InstPlanReader(applicationContext);
         planReader.readFile(fileName);
-        List<DriveCollection> driveCollections = Plan.getInstance().getDriveCollections();
-        return driveCollections;
+        return Plan.getInstance().getDriveCollections();
     }
 
 }
