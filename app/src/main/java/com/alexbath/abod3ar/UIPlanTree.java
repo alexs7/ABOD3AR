@@ -104,7 +104,7 @@ class UIPlanTree {
             private float endX;
             private float dX;
             private float dY;
-            private int CLICK_ACTION_THRESHOLD = 200;
+            private int CLICK_ACTION_THRESHOLD = 40;
             private float startX;
             private float startY;
 

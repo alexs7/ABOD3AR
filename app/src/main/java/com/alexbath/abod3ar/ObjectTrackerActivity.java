@@ -103,7 +103,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
         planName = "plans/DiaPlan3.inst";
-        serverIPAddress = "138.38.187.68";
+        serverIPAddress = "138.38.249.134";
         serverPort = 3001;
 
         createGeneralHandler();
@@ -475,8 +475,8 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                         //view = canvas
                         Point2D_F64 viewCenter = getViewCenter(location, imageToView);
 
-                        int startingXPoint = 80 - root.getData().getView().getWidth() / 2;
-                        int startingYPoint = 80 - root.getData().getView().getHeight() / 2;
+                        int startingXPoint = 100 - root.getData().getView().getWidth() / 2;
+                        int startingYPoint = - root.getData().getView().getHeight() / 2;
 
                         canvas.drawCircle((float) imageCenter.x, (float) imageCenter.y, 10, yellowPaint);
                         canvas.drawCircle((float) imageCenter.x, (float) imageCenter.y, 6, redPaint);
