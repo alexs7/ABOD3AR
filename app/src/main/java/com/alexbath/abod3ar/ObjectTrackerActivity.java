@@ -566,7 +566,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
         private void drawTree(UIPlanTree.Node<ARPlanElement> node, int widthAppender, int heightAppender, Point2D_F64 viewCenter) {
 
-            if(node.getData().getDragging() || node.getData().getDragged()){
+            if(node.getData().getDragging()){
                 return;
             }
 
@@ -600,36 +600,48 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
                 if(node.getData().getDragged()){
 
-                    
+                    stabilizeNode(node);
 
-                    return;
+
+                }else {
+
+                    node.getData().getView().setX((float) (viewCenter.x + widthAppender));
+                    node.getData().getView().setY((float) (viewCenter.y + heightAppender));
+
+                    widthAppender = widthAppender + node.getData().getView().getWidth() + 12;
+
+                    int childrenTotalHeight = 0;
+                    ;
+
+                    for (int i = 0; i < node.getChildren().size(); i++) {
+                        childrenTotalHeight += node.getChildren().get(i).getData().getView().getHeight();
+                    }
+
+                    int heightOffset = 0;
+
+                    if (node.getChildren().size() == 1) {
+                        heightOffset = 0;
+                    } else if (node.getChildren().size() % 2 == 0) {
+                        heightOffset = (int) (childrenTotalHeight / 2.6);
+                    } else if (node.getChildren().size() % 2 != 0) {
+                        heightOffset = childrenTotalHeight / 3;
+                    }
+
+                    for (int i = 0; i < node.getChildren().size(); i++) {
+                        drawTree(node.getChildren().get(i), widthAppender, heightAppender - heightOffset, viewCenter);
+                        heightAppender = heightAppender + node.getData().getView().getHeight() + 12;
+                    }
                 }
+            }
 
-                node.getData().getView().setX((float) (viewCenter.x + widthAppender));
-                node.getData().getView().setY((float) (viewCenter.y + heightAppender));
+        }
 
-                widthAppender = widthAppender + node.getData().getView().getWidth() + 12;
+        private void stabilizeNode(UIPlanTree.Node<ARPlanElement> node) {
+            node.getData().getView().setX((float) (node.getParent().getData().getView().getX() - node.getData().getNewCoordinates().x));
+            node.getData().getView().setY((float) (node.getParent().getData().getView().getY() - node.getData().getNewCoordinates().y));
 
-                int childrenTotalHeight = 0;;
-
-                for (int i = 0; i < node.getChildren().size(); i++){
-                    childrenTotalHeight += node.getChildren().get(i).getData().getView().getHeight();
-                }
-
-                int heightOffset = 0;
-
-                if(node.getChildren().size() == 1){
-                    heightOffset = 0;
-                }else if(node.getChildren().size() % 2 == 0){
-                    heightOffset = (int) (childrenTotalHeight/2.6);
-                }else if(node.getChildren().size() % 2 != 0){
-                    heightOffset = childrenTotalHeight/3;
-                }
-
-                for (int i = 0; i < node.getChildren().size(); i++){
-                    drawTree(node.getChildren().get(i), widthAppender, heightAppender - heightOffset, viewCenter);
-                    heightAppender = heightAppender +  node.getData().getView().getHeight() + 12;
-                }
+            for (int i = 0; i < node.getChildren().size(); i++){
+                stabilizeNode(node.getChildren().get(i));
             }
 
         }

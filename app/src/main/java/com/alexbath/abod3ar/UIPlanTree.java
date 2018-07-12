@@ -1,16 +1,11 @@
 package com.alexbath.abod3ar;
 
 import android.content.Context;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.support.constraint.ConstraintLayout;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Toast;
 
-import com.recklesscoding.abode.core.plan.planelements.PlanElement;
 import com.recklesscoding.abode.core.plan.planelements.action.ActionEvent;
 import com.recklesscoding.abode.core.plan.planelements.action.ActionPattern;
 import com.recklesscoding.abode.core.plan.planelements.competence.Competence;
@@ -73,7 +68,7 @@ class UIPlanTree {
         if(node.getParent() == null || node.getParent().getParent() == null ){
             node.getData().getView().setVisibility(View.VISIBLE);
         }else{
-            node.getData().getView().setVisibility(View.VISIBLE);
+            node.getData().getView().setVisibility(View.INVISIBLE);
         }
 
         rootLayout.addView(node.getData().getView());
@@ -105,9 +100,13 @@ class UIPlanTree {
 
         node.getData().getView().setOnTouchListener(new View.OnTouchListener() {
 
-            float dX;
-            float dY;
-            int lastAction;
+            private float endY;
+            private float endX;
+            private float dX;
+            private float dY;
+            private int CLICK_ACTION_THRESHOLD = 200;
+            private float startX;
+            private float startY;
 
             public boolean onTouch(View view, MotionEvent event) {
 
@@ -115,57 +114,56 @@ class UIPlanTree {
 
                     case MotionEvent.ACTION_DOWN:
 
+                        startX = event.getRawX();
+                        startY = event.getRawY();
+
                         setNodeToDragging(node,true);
 
                         System.out.println("ACTION_DOWN");
                         dX = node.getData().getView().getX() - event.getRawX();
                         dY = node.getData().getView().getY() - event.getRawY();
-                        lastAction = MotionEvent.ACTION_DOWN;
                         break;
 
                     case MotionEvent.ACTION_MOVE:
                         System.out.println("ACTION_MOVE");
 
-                        updateNodeXYRecursion(node,event,dX,dY,0,0);
+                        updateNodeXY(node,event,dX,dY,0,0);
 
-//                        node.getData().getView().setX(event.getRawX() + dX);
-//                        node.getData().getView().setY(event.getRawY() + dY);
-//
-//                        node.getChildren().get(0).getData().getView().setX(event.getRawX() + node.getData().getView().getWidth() + 12 + dX);
-//                        node.getChildren().get(0).getData().getView().setY(event.getRawY()  + dY);
-
-                        //node.getData().setNewCoordinates(new Point2D_F64(dX, dY));
-
-                        lastAction = MotionEvent.ACTION_MOVE;
                         break;
 
                     case MotionEvent.ACTION_UP:
 
-//                        if (isDrive(node)) {
-//                            for (Node<ARPlanElement> drive : root.getChildren()) {
-//                                if (!drive.getData().getName().equals(node.getData().getName())) {
-//                                    for (Node<ARPlanElement> driveChild : drive.getChildren()) {
-//                                        hideNode(driveChild);
-//                                    }
-//                                }
-//                            }
-//                        }
-//
-//                        for (Node<ARPlanElement> arPlanElementNode : node.getChildren()) {
-//                            if (arPlanElementNode.getData().getView().getVisibility() == View.INVISIBLE) {
-//                                arPlanElementNode.getData().getView().setVisibility(View.VISIBLE);
-//                            } else {
-//                                hideNode(arPlanElementNode);
-//                            }
-//                        }
+                        endX = event.getRawX();
+                        endY = event.getRawY();
+
+
 
                         setNodeToDragging(node,false);
-
                         setDragged(node);
 
-                        System.out.println("ACTION_UP");
-                        if (lastAction == MotionEvent.ACTION_DOWN)
-                            System.out.println("ACTION_UP inside");
+                        if (isAClick(startX, endX, startY, endY)) {
+
+                            System.out.println("CLICK?");
+
+                            if (isDrive(node)) {
+                                for (Node<ARPlanElement> drive : root.getChildren()) {
+                                    if (!drive.getData().getName().equals(node.getData().getName())) {
+                                        for (Node<ARPlanElement> driveChild : drive.getChildren()) {
+                                            hideNode(driveChild);
+                                        }
+                                    }
+                                }
+                            }
+
+                            for (Node<ARPlanElement> arPlanElementNode : node.getChildren()) {
+                                if (arPlanElementNode.getData().getView().getVisibility() == View.INVISIBLE) {
+                                    arPlanElementNode.getData().getView().setVisibility(View.VISIBLE);
+                                } else {
+                                    hideNode(arPlanElementNode);
+                                }
+                            }
+                        }
+
                         break;
 
                     default:
@@ -174,6 +172,12 @@ class UIPlanTree {
                 }
 
                 return true;
+            }
+
+            private boolean isAClick(float startX, float endX, float startY, float endY) {
+                float differenceX = Math.abs(startX - endX);
+                float differenceY = Math.abs(startY - endY);
+                return !(differenceX > CLICK_ACTION_THRESHOLD/* =5 */ || differenceY > CLICK_ACTION_THRESHOLD);
             }
         });
 
@@ -242,7 +246,9 @@ class UIPlanTree {
 
     }
 
-    private void updateNodeXYRecursion(Node<ARPlanElement> node, MotionEvent event, float dX, float dY, float offsetX, float offsetY) {
+    private void updateNodeXY(Node<ARPlanElement> node, MotionEvent event, float dX, float dY, float offsetX, float offsetY) {
+
+        node.getData().setNewCoordinates(new Point2D_F64(node.getParent().getData().getView().getX() - node.getData().getView().getX(), node.getParent().getData().getView().getY() - node.getData().getView().getY()));
 
         node.getData().getView().setX(event.getRawX() + offsetX + dX);
         node.getData().getView().setY(event.getRawY() + offsetY + dY);
@@ -250,7 +256,7 @@ class UIPlanTree {
         offsetX += node.getData().getView().getWidth() + 12;
 
         for (int i = 0; i < node.getChildren().size(); i++) {
-            updateNodeXYRecursion(node.getChildren().get(i),event,dX,dY,offsetX,offsetY);
+            updateNodeXY(node.getChildren().get(i),event,dX,dY,offsetX,offsetY);
             offsetY += node.getData().getView().getHeight() + 12;
         }
 
