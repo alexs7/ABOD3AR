@@ -102,7 +102,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
-        planName = "plans/DiaPlan3.inst";
+        planName = "plans/Plan6.inst";
         serverIPAddress = "138.38.187.68";
         serverPort = 3001;
 
@@ -475,7 +475,10 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                         //view = canvas
                         Point2D_F64 viewCenter = getViewCenter(location, imageToView);
 
-                        drawTree(root,0 , 0 ,viewCenter);
+                        int startingXPoint = -root.getData().getView().getWidth() / 2;
+                        int startingYPoint = -root.getData().getView().getHeight() / 2;
+
+                        drawTree(root,startingXPoint,startingYPoint,viewCenter);
 
 //                        root.getData().getView().setX((float) (viewCenter.x - root.getData().getView().getWidth()/2));
 //                        root.getData().getView().setY((float) (viewCenter.y - root.getData().getView().getHeight()/2));
@@ -524,22 +527,54 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                 node.getData().getView().setX((float) ( viewCenter.x + widthAppender  ));
                 node.getData().getView().setY((float) ( viewCenter.y + heightAppender ));
 
-                widthAppender = widthAppender + node.getData().getView().getWidth();
+                widthAppender = widthAppender + node.getData().getView().getWidth() + 12;
+
+                int childrenTotalHeight = 0;
 
                 for (int i = 0; i < node.getChildren().size(); i++){
-                    drawTree(node.getChildren().get(i), widthAppender, heightAppender ,viewCenter);
-                    heightAppender = heightAppender + node.getData().getView().getHeight();
+                    childrenTotalHeight += node.getChildren().get(i).getData().getView().getHeight();
+                }
+
+                int heightOffset = 0;
+
+                if(node.getChildren().size() == 1){
+                    heightOffset = 0;
+                }else if(node.getChildren().size() % 2 == 0){
+                    heightOffset = childrenTotalHeight/2;
+                }else if(node.getChildren().size() % 2 != 0){
+                    heightOffset = childrenTotalHeight/3;
+                }
+
+                for (int i = 0; i < node.getChildren().size(); i++){
+                    drawTree(node.getChildren().get(i), widthAppender, heightAppender - heightOffset,viewCenter);
+                    heightAppender = heightAppender + node.getData().getView().getHeight() + 12;
                 }
             }else{
 
                 node.getData().getView().setX((float) (viewCenter.x  + widthAppender));
                 node.getData().getView().setY((float) (viewCenter.y  + heightAppender));
 
-                widthAppender = widthAppender + node.getData().getView().getWidth();
+                widthAppender = widthAppender + node.getData().getView().getWidth() + 12;
+
+                int childrenTotalHeight = 0;;
 
                 for (int i = 0; i < node.getChildren().size(); i++){
-                    drawTree(node.getChildren().get(i), widthAppender, heightAppender, viewCenter);
-                    heightAppender = heightAppender +  node.getData().getView().getHeight();
+                    childrenTotalHeight += node.getChildren().get(i).getData().getView().getHeight();
+                }
+
+                int heightOffset = 0;
+
+                if(node.getChildren().size() == 1){
+                    heightOffset = 0;
+                }else if(node.getChildren().size() % 2 == 0){
+                    heightOffset = (int) (childrenTotalHeight/2.6);
+                }else if(node.getChildren().size() % 2 != 0){
+                    heightOffset = childrenTotalHeight/3;
+                }
+
+                for (int i = 0; i < node.getChildren().size(); i++){
+                    drawTree(node.getChildren().get(i), widthAppender, heightAppender - heightOffset, viewCenter);
+                    heightAppender = heightAppender +  node.getData().getView().getHeight() + 12;
                 }
             }
 

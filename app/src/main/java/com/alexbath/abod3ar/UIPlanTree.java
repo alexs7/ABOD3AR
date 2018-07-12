@@ -83,6 +83,11 @@ class UIPlanTree {
         node.getChildren().forEach(it -> removeNodesFromUI(rootLayout,it));
     }
 
+    public void hideNode(Node<ARPlanElement> node) {
+        node.getData().getView().setVisibility(View.INVISIBLE);
+        node.getChildren().forEach(it -> hideNode(it));
+    }
+
     public void setNodeBackgroundColor(String planElementName, Node<ARPlanElement> node) {
 
         if(node.getData().getName().equals(planElementName)){
@@ -97,11 +102,22 @@ class UIPlanTree {
     public void addNodes(Node<ARPlanElement> node, Object obj, Context context) {
 
         node.getData().getView().setOnClickListener(v -> {
+
+            if(isDrive(node)){
+                for (Node<ARPlanElement> drive : root.getChildren()) {
+                    if(!drive.getData().getName().equals(node.getData().getName())){
+                        for (Node<ARPlanElement> driveChild : drive.getChildren() ) {
+                            hideNode(driveChild);
+                        }
+                    }
+                }
+            }
+
             for (Node<ARPlanElement> arPlanElementNode : node.getChildren()) {
                 if(arPlanElementNode.getData().getView().getVisibility() == View.INVISIBLE){
                     arPlanElementNode.getData().getView().setVisibility(View.VISIBLE);
                 }else{
-                    arPlanElementNode.getData().getView().setVisibility(View.INVISIBLE);
+                    hideNode(arPlanElementNode);
                 }
             }
         });
@@ -169,6 +185,19 @@ class UIPlanTree {
             }
         }
 
+    }
+
+    private boolean isDrive(Node<ARPlanElement> node) {
+
+        if(node.getParent() == null){
+            return false;
+        }
+
+        if(node.getParent().getParent() == null){
+            return true;
+        }
+
+        return false;
     }
 
 
