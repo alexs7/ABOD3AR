@@ -474,7 +474,6 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                         Point2D_F64 imageCenter = getImageCenter(location);
                         //view = canvas
                         Point2D_F64 viewCenter = getViewCenter(location, imageToView);
-                        int childrenHeight = 0;
 
                         drawTree(root,0 , 0 ,viewCenter);
 
@@ -525,8 +524,11 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                 node.getData().getView().setX((float) ( viewCenter.x + widthAppender  ));
                 node.getData().getView().setY((float) ( viewCenter.y + heightAppender ));
 
+                widthAppender = widthAppender + node.getData().getView().getWidth();
+
                 for (int i = 0; i < node.getChildren().size(); i++){
-                    drawTree(node.getChildren().get(i), node.getData().getView().getWidth(), i * node.getData().getView().getHeight() ,viewCenter);
+                    drawTree(node.getChildren().get(i), widthAppender, heightAppender ,viewCenter);
+                    heightAppender = heightAppender + node.getData().getView().getHeight();
                 }
             }else{
 
@@ -536,11 +538,11 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                 widthAppender = widthAppender + node.getData().getView().getWidth();
 
                 for (int i = 0; i < node.getChildren().size(); i++){
-                    heightAppender =  heightAppender + i * node.getData().getView().getHeight();
-                    drawTree(node.getChildren().get(i), widthAppender,heightAppender, viewCenter);
+                    drawTree(node.getChildren().get(i), widthAppender, heightAppender, viewCenter);
+                    heightAppender = heightAppender +  node.getData().getView().getHeight();
                 }
             }
-            
+
         }
 
         private Point2D_F64 getImageCenter(Quadrilateral_F64 location){

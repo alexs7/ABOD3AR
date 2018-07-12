@@ -67,6 +67,13 @@ class UIPlanTree {
     }
 
     public void addNodesToUI(ConstraintLayout rootLayout, Node<ARPlanElement> node) {
+
+        if(node.getParent() == null || node.getParent().getParent() == null ){
+            node.getData().getView().setVisibility(View.VISIBLE);
+        }else{
+            node.getData().getView().setVisibility(View.INVISIBLE);
+        }
+
         rootLayout.addView(node.getData().getView());
         node.getChildren().forEach(it -> addNodesToUI(rootLayout,it));
     }
@@ -88,6 +95,16 @@ class UIPlanTree {
     }
 
     public void addNodes(Node<ARPlanElement> node, Object obj, Context context) {
+
+        node.getData().getView().setOnClickListener(v -> {
+            for (Node<ARPlanElement> arPlanElementNode : node.getChildren()) {
+                if(arPlanElementNode.getData().getView().getVisibility() == View.INVISIBLE){
+                    arPlanElementNode.getData().getView().setVisibility(View.VISIBLE);
+                }else{
+                    arPlanElementNode.getData().getView().setVisibility(View.INVISIBLE);
+                }
+            }
+        });
 
         if(obj instanceof ActionEvent){
 
