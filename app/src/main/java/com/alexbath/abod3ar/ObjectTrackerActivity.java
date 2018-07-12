@@ -566,6 +566,10 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
         private void drawTree(UIPlanTree.Node<ARPlanElement> node, int widthAppender, int heightAppender, Point2D_F64 viewCenter) {
 
+            if(node.getData().getDragging()){
+                return;
+            }
+
             if(node.getParent() == null ){
                 node.getData().getView().setX((float) ( viewCenter.x + widthAppender  ));
                 node.getData().getView().setY((float) ( viewCenter.y + heightAppender ));
@@ -594,8 +598,18 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                 }
             }else{
 
-                node.getData().getView().setX((float) (viewCenter.x  + widthAppender));
-                node.getData().getView().setY((float) (viewCenter.y  + heightAppender));
+                if(node.getData().getDragged()) {
+
+                    Point2D_F64 screenPoint = new Point2D_F64();
+                    applyToPoint(viewToImage, node.getData().getNewCoordinates().x, node.getData().getNewCoordinates().y, screenPoint);
+
+                    node.getData().getView().setX((float) ((node.getParent().getData().getView().getX() - node.getData().getNewCoordinates().x)));
+                    node.getData().getView().setY((float) ((node.getParent().getData().getView().getY() - node.getData().getNewCoordinates().y)));
+
+                }else{
+                    node.getData().getView().setX((float) (viewCenter.x + widthAppender));
+                    node.getData().getView().setY((float) (viewCenter.y + heightAppender));
+                }
 
                 widthAppender = widthAppender + node.getData().getView().getWidth() + 12;
 

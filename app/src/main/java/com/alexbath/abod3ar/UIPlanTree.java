@@ -6,7 +6,9 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.support.constraint.ConstraintLayout;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
 import com.recklesscoding.abode.core.plan.planelements.PlanElement;
 import com.recklesscoding.abode.core.plan.planelements.action.ActionEvent;
@@ -101,24 +103,66 @@ class UIPlanTree {
 
     public void addNodes(Node<ARPlanElement> node, Object obj, Context context) {
 
-        node.getData().getView().setOnClickListener(v -> {
+        node.getData().getView().setOnTouchListener(new View.OnTouchListener() {
 
-            if(isDrive(node)){
-                for (Node<ARPlanElement> drive : root.getChildren()) {
-                    if(!drive.getData().getName().equals(node.getData().getName())){
-                        for (Node<ARPlanElement> driveChild : drive.getChildren() ) {
-                            hideNode(driveChild);
-                        }
-                    }
-                }
-            }
+            float dX;
+            float dY;
+            int lastAction;
 
-            for (Node<ARPlanElement> arPlanElementNode : node.getChildren()) {
-                if(arPlanElementNode.getData().getView().getVisibility() == View.INVISIBLE){
-                    arPlanElementNode.getData().getView().setVisibility(View.VISIBLE);
-                }else{
-                    hideNode(arPlanElementNode);
+            public boolean onTouch(View view, MotionEvent event) {
+
+//                if (isDrive(node)) {
+//                    for (Node<ARPlanElement> drive : root.getChildren()) {
+//                        if (!drive.getData().getName().equals(node.getData().getName())) {
+//                            for (Node<ARPlanElement> driveChild : drive.getChildren()) {
+//                                hideNode(driveChild);
+//                            }
+//                        }
+//                    }
+//                }
+//
+//                for (Node<ARPlanElement> arPlanElementNode : node.getChildren()) {
+//                    if (arPlanElementNode.getData().getView().getVisibility() == View.INVISIBLE) {
+//                        arPlanElementNode.getData().getView().setVisibility(View.VISIBLE);
+//                    } else {
+//                        hideNode(arPlanElementNode);
+//                    }
+//                }
+
+                switch (event.getActionMasked()) {
+
+                    case MotionEvent.ACTION_DOWN:
+                        node.getData().setDragging(true);
+                        System.out.println("ACTION_DOWN");
+                        dX = node.getData().getView().getX() - event.getRawX();
+                        dY = node.getData().getView().getY() - event.getRawY();
+                        lastAction = MotionEvent.ACTION_DOWN;
+                        break;
+
+                    case MotionEvent.ACTION_MOVE:
+                        System.out.println("ACTION_MOVE");
+                        node.getData().getView().setY(event.getRawY() + dY);
+                        node.getData().getView().setX(event.getRawX() + dX);
+                        lastAction = MotionEvent.ACTION_MOVE;
+                        break;
+
+                    case MotionEvent.ACTION_UP:
+                        node.getData().setDragging(false);
+                        node.getData().setDragged(true);
+                        System.out.println(node.getData().getDragging());
+
+                        node.getData().setNewCoordinates(new Point2D_F64(node.getParent().getData().getView().getX() -  node.getData().getView().getX(), node.getParent().getData().getView().getY() - node.getData().getView().getY()));
+                        System.out.println("ACTION_UP");
+                        if (lastAction == MotionEvent.ACTION_DOWN)
+                            System.out.println("ACTION_UP inside");
+                        break;
+
+                    default:
+                        return false;
+
                 }
+
+                return true;
             }
         });
 
