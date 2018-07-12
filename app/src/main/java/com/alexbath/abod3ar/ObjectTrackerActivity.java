@@ -476,38 +476,40 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                         Point2D_F64 viewCenter = getViewCenter(location, imageToView);
                         int childrenHeight = 0;
 
-                        root.getData().getView().setX((float) (viewCenter.x - root.getData().getView().getWidth()/2));
-                        root.getData().getView().setY((float) (viewCenter.y - root.getData().getView().getHeight()/2));
+                        drawTree(root,0 , 0 ,viewCenter);
 
-                        for (int i = 0; i < root.getChildren().size(); i++) {
-                            childrenHeight += root.getChildren().get(i).getData().getView().getHeight();
-                        }
-
-                        for (int i = 0; i < root.getChildren().size(); i++) {
-
-                            UIPlanTree.Node<ARPlanElement> child = root.getChildren().get(i);
-
-                            child.getData().getView().setX(root.getData().getView().getX() + root.getData().getView().getWidth() + 14);
-                            child.getData().getView().setY(root.getData().getView().getY() - (childrenHeight/2 - (child.getData().getView().getHeight() + 24) * i));
-
-                            Point2D_F64 childAnchor = new Point2D_F64();
-                            applyToPoint(viewToImage, child.getData().getView().getX(),child.getData().getView().getY() + child.getData().getView().getHeight()/2,childAnchor);
-                            drawLine(canvas, new Point2D_F64(imageCenter.x,imageCenter.y), childAnchor, redPaint);
-
-                            for (int j = 0; j < child.getChildren().size(); j++) {
-
-                                UIPlanTree.Node<ARPlanElement> grandChild = child.getChildren().get(j);
-
-                                if(grandChild.getData().getView().getVisibility() == View.VISIBLE) {
-                                    grandChild.getData().getView().setX(child.getData().getView().getX() + child.getData().getView().getWidth() + 14);
-                                    grandChild.getData().getView().setY(child.getData().getView().getY());
-
-                                    Point2D_F64 grandChildAnchor = new Point2D_F64();
-                                    applyToPoint(viewToImage, grandChild.getData().getView().getX(), grandChild.getData().getView().getY() + grandChild.getData().getView().getHeight() / 2, grandChildAnchor);
-                                    drawLine(canvas, childAnchor, grandChildAnchor, greenPaint);
-                                }
-                            }
-                        }
+//                        root.getData().getView().setX((float) (viewCenter.x - root.getData().getView().getWidth()/2));
+//                        root.getData().getView().setY((float) (viewCenter.y - root.getData().getView().getHeight()/2));
+//
+//                        for (int i = 0; i < root.getChildren().size(); i++) {
+//                            childrenHeight += root.getChildren().get(i).getData().getView().getHeight();
+//                        }
+//
+//                        for (int i = 0; i < root.getChildren().size(); i++) {
+//
+//                            UIPlanTree.Node<ARPlanElement> child = root.getChildren().get(i);
+//
+//                            child.getData().getView().setX(root.getData().getView().getX() + root.getData().getView().getWidth() + 14);
+//                            child.getData().getView().setY(root.getData().getView().getY() - (childrenHeight/2 - (child.getData().getView().getHeight() + 24) * i));
+//
+//                            Point2D_F64 childAnchor = new Point2D_F64();
+//                            applyToPoint(viewToImage, child.getData().getView().getX(),child.getData().getView().getY() + child.getData().getView().getHeight()/2,childAnchor);
+//                            drawLine(canvas, new Point2D_F64(imageCenter.x,imageCenter.y), childAnchor, redPaint);
+//
+//                            for (int j = 0; j < child.getChildren().size(); j++) {
+//
+//                                UIPlanTree.Node<ARPlanElement> grandChild = child.getChildren().get(j);
+//
+//                                if(grandChild.getData().getView().getVisibility() == View.VISIBLE) {
+//                                    grandChild.getData().getView().setX(child.getData().getView().getX() + child.getData().getView().getWidth() + 14);
+//                                    grandChild.getData().getView().setY(child.getData().getView().getY());
+//
+//                                    Point2D_F64 grandChildAnchor = new Point2D_F64();
+//                                    applyToPoint(viewToImage, grandChild.getData().getView().getX(), grandChild.getData().getView().getY() + grandChild.getData().getView().getHeight() / 2, grandChildAnchor);
+//                                    drawLine(canvas, childAnchor, grandChildAnchor, greenPaint);
+//                                }
+//                            }
+//                        }
 
                     }
 
@@ -515,6 +517,30 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                     canvas.drawText("X",width/2,height/2, textPaint);
                 }
             }
+        }
+
+        private void drawTree(UIPlanTree.Node<ARPlanElement> node, int widthAppender, int heightAppender, Point2D_F64 viewCenter) {
+
+            if(node.getParent() == null ){
+                node.getData().getView().setX((float) ( viewCenter.x + widthAppender  ));
+                node.getData().getView().setY((float) ( viewCenter.y + heightAppender ));
+
+                for (int i = 0; i < node.getChildren().size(); i++){
+                    drawTree(node.getChildren().get(i), node.getData().getView().getWidth(), i * node.getData().getView().getHeight() ,viewCenter);
+                }
+            }else{
+
+                node.getData().getView().setX((float) (viewCenter.x  + widthAppender));
+                node.getData().getView().setY((float) (viewCenter.y  + heightAppender));
+
+                widthAppender = widthAppender + node.getData().getView().getWidth();
+
+                for (int i = 0; i < node.getChildren().size(); i++){
+                    heightAppender =  heightAppender + i * node.getData().getView().getHeight();
+                    drawTree(node.getChildren().get(i), widthAppender,heightAppender, viewCenter);
+                }
+            }
+            
         }
 
         private Point2D_F64 getImageCenter(Quadrilateral_F64 location){
