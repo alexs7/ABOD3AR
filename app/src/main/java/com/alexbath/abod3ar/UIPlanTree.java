@@ -187,7 +187,17 @@ class UIPlanTree {
 
     }
 
-    private boolean isDrive(Node<ARPlanElement> node) {
+    public boolean isRoot(Node<ARPlanElement> node) {
+
+        if(node.getParent() == null){
+            return true;
+        }
+
+        return false;
+
+    }
+
+    public boolean isDrive(Node<ARPlanElement> node) {
 
         if(node.getParent() == null){
             return false;

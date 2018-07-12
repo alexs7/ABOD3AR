@@ -4,9 +4,9 @@
     android:id="@+id/planElement"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:textSize="16sp"
+    android:textSize="14sp"
     android:textColor="@android:color/white"
-    android:textStyle="bold"
+    android:elevation="16dp"
     android:background="@drawable/ar_element_background"
     android:padding="4dp">
 </TextView>
