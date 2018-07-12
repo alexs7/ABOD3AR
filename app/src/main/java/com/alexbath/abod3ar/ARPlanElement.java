@@ -41,6 +41,8 @@ class ARPlanElement {
 //        drawableForeground = (GradientDrawable) element.getForeground();
         this.drawableBackground.setStroke(2, borderColor);
         this.running = new AtomicBoolean(true);
+
+        this.newCoordinates = new Point2D_F64(0,0);
     }
 
     public View getView() {

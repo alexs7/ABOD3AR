@@ -73,7 +73,7 @@ class UIPlanTree {
         if(node.getParent() == null || node.getParent().getParent() == null ){
             node.getData().getView().setVisibility(View.VISIBLE);
         }else{
-            node.getData().getView().setVisibility(View.INVISIBLE);
+            node.getData().getView().setVisibility(View.VISIBLE);
         }
 
         rootLayout.addView(node.getData().getView());
@@ -111,28 +111,12 @@ class UIPlanTree {
 
             public boolean onTouch(View view, MotionEvent event) {
 
-//                if (isDrive(node)) {
-//                    for (Node<ARPlanElement> drive : root.getChildren()) {
-//                        if (!drive.getData().getName().equals(node.getData().getName())) {
-//                            for (Node<ARPlanElement> driveChild : drive.getChildren()) {
-//                                hideNode(driveChild);
-//                            }
-//                        }
-//                    }
-//                }
-//
-//                for (Node<ARPlanElement> arPlanElementNode : node.getChildren()) {
-//                    if (arPlanElementNode.getData().getView().getVisibility() == View.INVISIBLE) {
-//                        arPlanElementNode.getData().getView().setVisibility(View.VISIBLE);
-//                    } else {
-//                        hideNode(arPlanElementNode);
-//                    }
-//                }
-
                 switch (event.getActionMasked()) {
 
                     case MotionEvent.ACTION_DOWN:
-                        node.getData().setDragging(true);
+
+                        setNodeToDragging(node,true);
+
                         System.out.println("ACTION_DOWN");
                         dX = node.getData().getView().getX() - event.getRawX();
                         dY = node.getData().getView().getY() - event.getRawY();
@@ -141,17 +125,44 @@ class UIPlanTree {
 
                     case MotionEvent.ACTION_MOVE:
                         System.out.println("ACTION_MOVE");
-                        node.getData().getView().setY(event.getRawY() + dY);
-                        node.getData().getView().setX(event.getRawX() + dX);
+
+                        updateNodeXYRecursion(node,event,dX,dY,0,0);
+
+//                        node.getData().getView().setX(event.getRawX() + dX);
+//                        node.getData().getView().setY(event.getRawY() + dY);
+//
+//                        node.getChildren().get(0).getData().getView().setX(event.getRawX() + node.getData().getView().getWidth() + 12 + dX);
+//                        node.getChildren().get(0).getData().getView().setY(event.getRawY()  + dY);
+
+                        //node.getData().setNewCoordinates(new Point2D_F64(dX, dY));
+
                         lastAction = MotionEvent.ACTION_MOVE;
                         break;
 
                     case MotionEvent.ACTION_UP:
-                        node.getData().setDragging(false);
-                        node.getData().setDragged(true);
-                        System.out.println(node.getData().getDragging());
 
-                        node.getData().setNewCoordinates(new Point2D_F64(node.getParent().getData().getView().getX() -  node.getData().getView().getX(), node.getParent().getData().getView().getY() - node.getData().getView().getY()));
+//                        if (isDrive(node)) {
+//                            for (Node<ARPlanElement> drive : root.getChildren()) {
+//                                if (!drive.getData().getName().equals(node.getData().getName())) {
+//                                    for (Node<ARPlanElement> driveChild : drive.getChildren()) {
+//                                        hideNode(driveChild);
+//                                    }
+//                                }
+//                            }
+//                        }
+//
+//                        for (Node<ARPlanElement> arPlanElementNode : node.getChildren()) {
+//                            if (arPlanElementNode.getData().getView().getVisibility() == View.INVISIBLE) {
+//                                arPlanElementNode.getData().getView().setVisibility(View.VISIBLE);
+//                            } else {
+//                                hideNode(arPlanElementNode);
+//                            }
+//                        }
+
+                        setNodeToDragging(node,false);
+
+                        setDragged(node);
+
                         System.out.println("ACTION_UP");
                         if (lastAction == MotionEvent.ACTION_DOWN)
                             System.out.println("ACTION_UP inside");
@@ -229,6 +240,30 @@ class UIPlanTree {
             }
         }
 
+    }
+
+    private void updateNodeXYRecursion(Node<ARPlanElement> node, MotionEvent event, float dX, float dY, float offsetX, float offsetY) {
+
+        node.getData().getView().setX(event.getRawX() + offsetX + dX);
+        node.getData().getView().setY(event.getRawY() + offsetY + dY);
+
+        offsetX += node.getData().getView().getWidth() + 12;
+
+        for (int i = 0; i < node.getChildren().size(); i++) {
+            updateNodeXYRecursion(node.getChildren().get(i),event,dX,dY,offsetX,offsetY);
+            offsetY += node.getData().getView().getHeight() + 12;
+        }
+
+    }
+
+    private void setNodeToDragging(Node<ARPlanElement> node, boolean dragging) {
+        node.getData().setDragging(dragging);
+        node.getChildren().forEach(it -> setNodeToDragging(it,dragging));
+    }
+
+    private void setDragged(Node<ARPlanElement> node) {
+        node.getData().setDragged(true);
+        node.getChildren().forEach(it -> setDragged(it));
     }
 
     public boolean isRoot(Node<ARPlanElement> node) {

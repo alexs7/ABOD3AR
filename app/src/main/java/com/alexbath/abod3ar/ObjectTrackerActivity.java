@@ -566,7 +566,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
         private void drawTree(UIPlanTree.Node<ARPlanElement> node, int widthAppender, int heightAppender, Point2D_F64 viewCenter) {
 
-            if(node.getData().getDragging()){
+            if(node.getData().getDragging() || node.getData().getDragged()){
                 return;
             }
 
@@ -598,18 +598,15 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                 }
             }else{
 
-                if(node.getData().getDragged()) {
+                if(node.getData().getDragged()){
 
-                    Point2D_F64 screenPoint = new Point2D_F64();
-                    applyToPoint(viewToImage, node.getData().getNewCoordinates().x, node.getData().getNewCoordinates().y, screenPoint);
+                    
 
-                    node.getData().getView().setX((float) ((node.getParent().getData().getView().getX() - node.getData().getNewCoordinates().x)));
-                    node.getData().getView().setY((float) ((node.getParent().getData().getView().getY() - node.getData().getNewCoordinates().y)));
-
-                }else{
-                    node.getData().getView().setX((float) (viewCenter.x + widthAppender));
-                    node.getData().getView().setY((float) (viewCenter.y + heightAppender));
+                    return;
                 }
+
+                node.getData().getView().setX((float) (viewCenter.x + widthAppender));
+                node.getData().getView().setY((float) (viewCenter.y + heightAppender));
 
                 widthAppender = widthAppender + node.getData().getView().getWidth() + 12;
 
@@ -635,6 +632,17 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                 }
             }
 
+        }
+
+        private void updateNodeRecursively(UIPlanTree.Node<ARPlanElement> node , double dx, double dy) {
+
+            node.getData().getView().setX((float) ((node.getParent().getData().getView().getX() - dx)));
+            node.getData().getView().setY((float) ((node.getParent().getData().getView().getY() - dy)));
+
+            for (int i = 0; i < node.getChildren().size(); i++){
+                node.getChildren().get(i).getData().setDragged(true);
+                updateNodeRecursively(node.getChildren().get(i),dx,dy);
+            }
         }
 
         private Point2D_F64 getImageCenter(Quadrilateral_F64 location){
