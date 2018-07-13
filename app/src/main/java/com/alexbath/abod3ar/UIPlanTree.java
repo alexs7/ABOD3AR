@@ -80,20 +80,34 @@ class UIPlanTree {
         node.getChildren().forEach(it -> removeNodesFromUI(rootLayout,it));
     }
 
-    public void hideNode(Node<ARPlanElement> node) {
+    public void hideNodes(Node<ARPlanElement> node) {
         node.getData().getView().setVisibility(View.INVISIBLE);
-        node.getChildren().forEach(it -> hideNode(it));
+        node.getChildren().forEach(it -> hideNodes(it));
     }
 
-    public void setNodeBackgroundColor(String planElementName, Node<ARPlanElement> node) {
+    public void updateNodesVisuals(String planElementName, Node<ARPlanElement> node) {
 
         if(node.getData().getName().equals(planElementName)){
             node.getData().setBackgroundColor(Color.parseColor("#0000ff"));
+
+            if(isDrive(node.getParent())){
+                hideOtherDrives(node.getParent());
+            }
+
+            if(isDrive(node) && node.getChildren().isEmpty()){
+                hideOtherDrives(node);
+            }
+
+            if(node.getData().getView().getVisibility() == View.INVISIBLE && isDrive(node.getParent())) {
+                node.getData().getView().setVisibility(View.VISIBLE);
+            }
+
         }else{
             node.getData().setBackgroundColor(Color.parseColor("#2f4f4f"));
+
         }
 
-        node.getChildren().forEach(it -> setNodeBackgroundColor(planElementName, it));
+        node.getChildren().forEach(it -> updateNodesVisuals(planElementName, it));
     }
 
     public void addNodes(Node<ARPlanElement> node, Object obj, Context context) {
@@ -104,7 +118,7 @@ class UIPlanTree {
             private float endX;
             private float dX;
             private float dY;
-            private int CLICK_ACTION_THRESHOLD = 40;
+            private int CLICK_ACTION_THRESHOLD = 50;
             private float startX;
             private float startY;
 
@@ -117,7 +131,9 @@ class UIPlanTree {
                         startX = event.getRawX();
                         startY = event.getRawY();
 
-                        setNodeToDragging(node,true);
+                        if(!isRoot(node)) {
+                            setNodeToDragging(node, true);
+                        }
 
                         System.out.println("ACTION_DOWN");
                         dX = node.getData().getView().getX() - event.getRawX();
@@ -127,7 +143,9 @@ class UIPlanTree {
                     case MotionEvent.ACTION_MOVE:
                         System.out.println("ACTION_MOVE");
 
-                        updateNodeXY(node,event,dX,dY,0,0);
+                        if(!isRoot(node)) {
+                            updateNodeXY(node, event, dX, dY, 0, 0);
+                        }
 
                         break;
 
@@ -136,30 +154,22 @@ class UIPlanTree {
                         endX = event.getRawX();
                         endY = event.getRawY();
 
-
-
-                        setNodeToDragging(node,false);
-                        setDragged(node);
+                        if(!isRoot(node)) {
+                            setNodeToDragging(node, false);
+                            setDragged(node);
+                        }
 
                         if (isAClick(startX, endX, startY, endY)) {
 
                             System.out.println("CLICK?");
 
-                            if (isDrive(node)) {
-                                for (Node<ARPlanElement> drive : root.getChildren()) {
-                                    if (!drive.getData().getName().equals(node.getData().getName())) {
-                                        for (Node<ARPlanElement> driveChild : drive.getChildren()) {
-                                            hideNode(driveChild);
-                                        }
-                                    }
-                                }
-                            }
+                            hideOtherDrives(node);
 
                             for (Node<ARPlanElement> arPlanElementNode : node.getChildren()) {
                                 if (arPlanElementNode.getData().getView().getVisibility() == View.INVISIBLE) {
                                     arPlanElementNode.getData().getView().setVisibility(View.VISIBLE);
                                 } else {
-                                    hideNode(arPlanElementNode);
+                                    hideNodes(arPlanElementNode);
                                 }
                             }
                         }
@@ -244,6 +254,18 @@ class UIPlanTree {
             }
         }
 
+    }
+
+    private void hideOtherDrives(Node<ARPlanElement> node) {
+        if (isDrive(node)) {
+            for (Node<ARPlanElement> drive : root.getChildren()) {
+                if (!drive.getData().getName().equals(node.getData().getName())) {
+                    for (Node<ARPlanElement> driveChild : drive.getChildren()) {
+                        hideNodes(driveChild);
+                    }
+                }
+            }
+        }
     }
 
     private void updateNodeXY(Node<ARPlanElement> node, MotionEvent event, float dX, float dY, float offsetX, float offsetY) {
@@ -331,6 +353,5 @@ class UIPlanTree {
         public Node<T> getParent(){
             return parent;
         }
-
     }
 }

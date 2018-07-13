@@ -27,7 +27,6 @@ import com.recklesscoding.abode.core.plan.Plan;
 import com.recklesscoding.abode.core.plan.planelements.PlanElement;
 import com.recklesscoding.abode.core.plan.planelements.action.ActionEvent;
 import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
-import com.recklesscoding.abode.core.plan.planelements.drives.DriveElement;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -103,7 +102,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
         planName = "plans/DiaPlan3.inst";
-        serverIPAddress = "138.38.249.134";
+        serverIPAddress = "138.38.185.103";
         serverPort = 3001;
 
         createGeneralHandler();
@@ -205,6 +204,19 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
     }
 
     private void updateARElementsVisuals(Message msg) {
+
+        if(msg.obj == null){
+            serverTextView.setText("No Incoming String! \n");
+            System.out.println("No Incoming String!");
+            return;
+        }
+
+        if(msg.obj.equals("Robot Running ...")){
+            serverTextView.setText("Invalid String: " + msg.obj + "\n" );
+            System.out.println("Invalid String: " + msg.obj + "\n" );
+            return;
+        }
+
         String[] splittedLine = ((String) msg.obj).split(" ");
         PlanElement planElement = null;
         String typeOfPlanElement;
@@ -215,7 +227,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
             if (!isActionPatternElement(typeOfPlanElement)) { //We ignore ActionPatternELements as they are instinct only
                 planElement = getPlanElement(typeOfPlanElement, planElement, planElementName);
                 if (planElement != null) {
-                    uiPlanTree.setNodeBackgroundColor(planElementName,root);
+                    uiPlanTree.updateNodesVisuals(planElementName,root);
                 }
             }
         }
@@ -566,9 +578,9 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
         private void drawTree(UIPlanTree.Node<ARPlanElement> node, int widthAppender, int heightAppender, Point2D_F64 viewCenter) {
 
-            if(node.getData().getDragging()){
-                return;
-            }
+//            if(node.getData().getDragging()){
+//                return;
+//            }
 
             if(node.getParent() == null ){
                 node.getData().getView().setX((float) ( viewCenter.x + widthAppender  ));
@@ -598,12 +610,12 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                 }
             }else{
 
-                if(node.getData().getDragged()){
-
-                    stabilizeNode(node);
-
-
-                }else {
+//                if(node.getData().getDragged()){
+//
+//                    stabilizeNode(node);
+//
+//
+//                }else {
 
                     node.getData().getView().setX((float) (viewCenter.x + widthAppender));
                     node.getData().getView().setY((float) (viewCenter.y + heightAppender));
@@ -631,7 +643,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                         drawTree(node.getChildren().get(i), widthAppender, heightAppender - heightOffset, viewCenter);
                         heightAppender = heightAppender + node.getData().getView().getHeight() + 12;
                     }
-                }
+//                }
             }
 
         }
