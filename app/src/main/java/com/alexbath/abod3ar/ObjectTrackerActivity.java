@@ -48,7 +48,6 @@ import georegression.struct.point.Point2D_I32;
 import georegression.struct.shapes.Quadrilateral_F64;
 import mehdi.sakout.fancybuttons.FancyButton;
 
-import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.CIRCULANT;
 import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.TLD;
 
 public class ObjectTrackerActivity extends Camera2Activity implements View.OnTouchListener {
@@ -80,6 +79,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
     private ScheduledExecutorService serverPingerScheduler;
     private UIPlanTree.Node<ARPlanElement> root = null;
     private UIPlanTree uiPlanTree = null;
+    private ExecutorService nodeFlasherExecutor = null;
 
     public enum TrackerType { // TODO: add the others later
         CIRCULANT,MEAN_SHIFT_LIKELIHOOD,MEAN_SHIFT,TLD,MEAN_SHIFT_SCALE,SPARSE_FLOW
@@ -191,6 +191,14 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
                 uiPlanTree.addNodes(root,driveCollections, getApplicationContext());
 
+                nodeFlasherExecutor = Executors.newSingleThreadExecutor();
+                nodeFlasherExecutor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        uiPlanTree.addFlashingThreadsToNodes();
+                    }
+                });
+
                 uiPlanTree.addNodesToUI(rootLayout,root);
 
             }
@@ -293,7 +301,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
     @Override
     public void createNewProcessor() {
-        startObjectTracking(setTrackerType(CIRCULANT));
+        startObjectTracking(setTrackerType(TLD));
     }
 
     private void startObjectTracking(int pos) {
@@ -396,7 +404,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
             mode = 0;
             this.tracker = tracker;
 
-            paintSelected.setARGB(0xFF/2,0xFF,0xFF,0);
+            paintSelected.setARGB(0xFF/3,0xFF,0xFF,0);
             paintSelected.setStyle(Paint.Style.FILL_AND_STROKE);
 
             bluePaint.setColor(Color.BLUE);
@@ -451,6 +459,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         public void onDraw(Canvas canvas, Matrix imageToView) {
 
             canvas.concat(imageToView);
+
             if( mode == 1 ) {
                 Point2D_F64 a = new Point2D_F64();
                 Point2D_F64 b = new Point2D_F64();
@@ -514,40 +523,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
                         drawTree(root,startingXPoint,startingYPoint,viewCenter);
                         drawTreeUIElementsConnectors(root,canvas,viewToImage,imageCenter);
-
-//                        root.getData().getView().setX((float) (viewCenter.x - root.getData().getView().getWidth()/2));
-//                        root.getData().getView().setY((float) (viewCenter.y - root.getData().getView().getHeight()/2));
-//
-//                        for (int i = 0; i < root.getChildren().size(); i++) {
-//                            childrenHeight += root.getChildren().get(i).getData().getView().getHeight();
-//                        }
-//
-//                        for (int i = 0; i < root.getChildren().size(); i++) {
-//
-//                            UIPlanTree.Node<ARPlanElement> child = root.getChildren().get(i);
-//
-//                            child.getData().getView().setX(root.getData().getView().getX() + root.getData().getView().getWidth() + 14);
-//                            child.getData().getView().setY(root.getData().getView().getY() - (childrenHeight/2 - (child.getData().getView().getHeight() + 24) * i));
-//
-//                            Point2D_F64 childAnchor = new Point2D_F64();
-//                            applyToPoint(viewToImage, child.getData().getView().getX(),child.getData().getView().getY() + child.getData().getView().getHeight()/2,childAnchor);
-//                            drawLine(canvas, new Point2D_F64(imageCenter.x,imageCenter.y), childAnchor, redPaint);
-//
-//                            for (int j = 0; j < child.getChildren().size(); j++) {
-//
-//                                UIPlanTree.Node<ARPlanElement> grandChild = child.getChildren().get(j);
-//
-//                                if(grandChild.getData().getView().getVisibility() == View.VISIBLE) {
-//                                    grandChild.getData().getView().setX(child.getData().getView().getX() + child.getData().getView().getWidth() + 14);
-//                                    grandChild.getData().getView().setY(child.getData().getView().getY());
-//
-//                                    Point2D_F64 grandChildAnchor = new Point2D_F64();
-//                                    applyToPoint(viewToImage, grandChild.getData().getView().getX(), grandChild.getData().getView().getY() + grandChild.getData().getView().getHeight() / 2, grandChildAnchor);
-//                                    drawLine(canvas, childAnchor, grandChildAnchor, greenPaint);
-//                                }
-//                            }
-//                        }
-
+                        
                     }
 
                 } else {
