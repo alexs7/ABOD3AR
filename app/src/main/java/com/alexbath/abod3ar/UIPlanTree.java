@@ -78,7 +78,7 @@ class UIPlanTree {
             }
 
         }else{
-            node.getData().setBackgroundColor(Color.parseColor("#2f4f4f"));
+            //node.getData().setBackgroundColor(Color.parseColor("#2f4f4f"));
 
         }
 
