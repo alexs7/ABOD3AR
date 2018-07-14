@@ -47,6 +47,8 @@ import georegression.struct.point.Point2D_F64;
 import georegression.struct.point.Point2D_I32;
 import georegression.struct.shapes.Quadrilateral_F64;
 import mehdi.sakout.fancybuttons.FancyButton;
+
+import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.CIRCULANT;
 import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.TLD;
 
 public class ObjectTrackerActivity extends Camera2Activity implements View.OnTouchListener {
@@ -60,6 +62,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
     private FrameLayout surfaceLayout = null;
     private FancyButton connectToServerbutton = null;
     private FancyButton loadPlanButton = null;
+    private FancyButton automaticModeButton = null;
     private TextView serverTextView = null;
     private FancyButton reset_button = null;
     private FancyButton showServerDataButton = null;
@@ -101,8 +104,8 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
-        planName = "plans/DiaPlan3.inst";
-        serverIPAddress = "138.38.185.103";
+        planName = "plans/Plan6.inst";
+        serverIPAddress = "192.168.0.101";
         serverPort = 3001;
 
         createGeneralHandler();
@@ -115,11 +118,26 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         connectToServerbutton = findViewById(R.id.connect_server_button);
         loadPlanButton = findViewById(R.id.load_plan_button);
         showServerDataButton = findViewById(R.id.show_server_data);
+        automaticModeButton = findViewById(R.id.automatic_mode);
+        reset_button = findViewById(R.id.reset_button);
 
         startCamera(surfaceLayout,null);
         displayView.setOnTouchListener(this);
 
-        reset_button = findViewById(R.id.reset_button);
+        automaticModeButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if(uiPlanTree != null){
+                    if(uiPlanTree.getAutomaticMode()){
+                        automaticModeButton.setText("Enable Auto Mode");
+                        uiPlanTree.setAutomaticMode(false);
+                    }else {
+                        automaticModeButton.setText("Disable Auto Mode");
+                        uiPlanTree.setAutomaticMode(true);
+                    }
+                }
+            }
+        });
+
         reset_button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 reset();
@@ -246,6 +264,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         root = null;
         uiPlanTree = null;
         mode = 0;
+        networkExecutor = null;
     }
 
     private boolean stopExecutorService(ExecutorService service) {
@@ -274,7 +293,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
     @Override
     public void createNewProcessor() {
-        startObjectTracking(setTrackerType(TLD));
+        startObjectTracking(setTrackerType(CIRCULANT));
     }
 
     private void startObjectTracking(int pos) {
@@ -578,9 +597,9 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
         private void drawTree(UIPlanTree.Node<ARPlanElement> node, int widthAppender, int heightAppender, Point2D_F64 viewCenter) {
 
-//            if(node.getData().getDragging()){
-//                return;
-//            }
+            if(node.getData().getDragging()){
+                return;
+            }
 
             if(node.getParent() == null ){
                 node.getData().getView().setX((float) ( viewCenter.x + widthAppender  ));
@@ -610,12 +629,12 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                 }
             }else{
 
-//                if(node.getData().getDragged()){
-//
-//                    stabilizeNode(node);
-//
-//
-//                }else {
+                if(node.getData().getDragged()){
+
+                    stabilizeNode(node);
+
+
+                }else {
 
                     node.getData().getView().setX((float) (viewCenter.x + widthAppender));
                     node.getData().getView().setY((float) (viewCenter.y + heightAppender));
@@ -643,7 +662,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                         drawTree(node.getChildren().get(i), widthAppender, heightAppender - heightOffset, viewCenter);
                         heightAppender = heightAppender + node.getData().getView().getHeight() + 12;
                     }
-//                }
+                }
             }
 
         }

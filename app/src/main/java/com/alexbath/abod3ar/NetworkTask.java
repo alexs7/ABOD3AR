@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.util.Scanner;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -16,7 +17,7 @@ public class NetworkTask implements Runnable {
     private int port;
     private String ipAddress;
     private Socket socket = null;
-    private BufferedReader br = null;
+    private Scanner br = null;
     private String response = null;
     private static final int SERVER_RESPONSE = 1;
     private Handler handler = null;
@@ -33,7 +34,7 @@ public class NetworkTask implements Runnable {
 
         try {
             socket = new Socket(ipAddress, port);
-            br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            br = new Scanner(new InputStreamReader(socket.getInputStream()));
 
             System.out.println("Connection Successful!");
 
@@ -41,19 +42,15 @@ public class NetworkTask implements Runnable {
 
                 @Override
                 public void run() {
-                    try {
-                        response = br.readLine();
-                        Message message = new Message();
-                        message.what = SERVER_RESPONSE;
-                        message.obj = response;
-                        handler.sendMessage(message);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    response = br.nextLine();
+                    Message message = new Message();
+                    message.what = SERVER_RESPONSE;
+                    message.obj = response;
+                    handler.sendMessage(message);
                 }
             };
 
-            serverPingerScheduler.scheduleAtFixedRate(pinger, 100, 60, TimeUnit.MILLISECONDS);
+            serverPingerScheduler.scheduleAtFixedRate(pinger, 50, 50, TimeUnit.MILLISECONDS);
 
         } catch (IOException e) {
             e.printStackTrace();

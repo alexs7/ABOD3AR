@@ -21,37 +21,10 @@ import georegression.struct.point.Point2D_F64;
 class UIPlanTree {
 
     public Node<ARPlanElement> root = null;
+    public boolean automaticMode = true;
 
     public UIPlanTree(List<DriveCollection> driveCollections, Context context) {
-
         root = new Node<>(new ARPlanElement(context, 0,"Drives", Color.YELLOW));
-
-//        for (int i = 0; i < driveCollections.size(); i++) {
-//
-//            int drivePriority = i+1;
-//
-//            DriveCollection driveCollection = driveCollections.get(i);
-//            Node<ARPlanElement> child = root.addChild(new Node<>(new ARPlanElement(context, drivePriority , driveCollection.getNameOfElement(), Color.RED)));
-//
-//            PlanElement triggeredElement = driveCollection.getTriggeredElement();
-//
-//            if(triggeredElement != null){
-//
-//                child.addChild(new Node<>(new ARPlanElement(context, 0, triggeredElement.getNameOfElement() , Color.GREEN)));
-//                //quick hack to set level 2 elements to invisible
-//                child.getChildren().get(0).getData().getView().setVisibility(View.INVISIBLE);
-//
-//                child.getData().getView().setOnClickListener(v -> {
-//
-//                    if(child.getChildren().get(0).getData().getView().getVisibility() == View.VISIBLE){
-//                        child.getChildren().get(0).getData().getView().setVisibility(View.INVISIBLE);
-//                    }else{
-//                        child.getChildren().get(0).getData().getView().setVisibility(View.VISIBLE);
-//                    }
-//
-//                });
-//            }
-//        }
     }
 
     public Node<ARPlanElement> getRoot() {
@@ -90,16 +63,18 @@ class UIPlanTree {
         if(node.getData().getName().equals(planElementName)){
             node.getData().setBackgroundColor(Color.parseColor("#0000ff"));
 
-            if(isDrive(node.getParent())){
-                hideOtherDrives(node.getParent());
-            }
+            if(automaticMode) {
+                if (isDrive(node.getParent())) {
+                    hideOtherDrivesChildren(node.getParent());
+                }
 
-            if(isDrive(node) && node.getChildren().isEmpty()){
-                hideOtherDrives(node);
-            }
+                if (isDrive(node) && node.getChildren().isEmpty()) {
+                    hideOtherDrivesChildren(node);
+                }
 
-            if(node.getData().getView().getVisibility() == View.INVISIBLE && isDrive(node.getParent())) {
-                node.getData().getView().setVisibility(View.VISIBLE);
+                if (node.getData().getView().getVisibility() == View.INVISIBLE && isDrive(node.getParent())) {
+                    node.getData().getView().setVisibility(View.VISIBLE);
+                }
             }
 
         }else{
@@ -118,11 +93,15 @@ class UIPlanTree {
             private float endX;
             private float dX;
             private float dY;
-            private int CLICK_ACTION_THRESHOLD = 50;
+            private int CLICK_ACTION_THRESHOLD = 25;
             private float startX;
             private float startY;
 
             public boolean onTouch(View view, MotionEvent event) {
+
+                if(automaticMode){
+                    return true;
+                }
 
                 switch (event.getActionMasked()) {
 
@@ -138,6 +117,7 @@ class UIPlanTree {
                         System.out.println("ACTION_DOWN");
                         dX = node.getData().getView().getX() - event.getRawX();
                         dY = node.getData().getView().getY() - event.getRawY();
+
                         break;
 
                     case MotionEvent.ACTION_MOVE:
@@ -163,13 +143,23 @@ class UIPlanTree {
 
                             System.out.println("CLICK?");
 
-                            hideOtherDrives(node);
+                            if(node.getChildren().size() >= 3 && !isRoot(node)){
+                                hideAllOtherDrives(node);
+                            }
+
+                            hideOtherDrivesChildren(node);
 
                             for (Node<ARPlanElement> arPlanElementNode : node.getChildren()) {
                                 if (arPlanElementNode.getData().getView().getVisibility() == View.INVISIBLE) {
                                     arPlanElementNode.getData().getView().setVisibility(View.VISIBLE);
                                 } else {
                                     hideNodes(arPlanElementNode);
+                                }
+                            }
+
+                            if(isRoot(node)){
+                                for (Node<ARPlanElement> drive : root.getChildren()) {
+                                    drive.getData().getView().setVisibility(View.VISIBLE);
                                 }
                             }
                         }
@@ -230,6 +220,8 @@ class UIPlanTree {
 
                     if(driveCollection.getTriggeredElement() != null) {
                         addNodes(child, driveCollection.getTriggeredElement(),context);
+                    }else{
+                        addNodes(child, null, context);
                     }
                 }
 
@@ -256,7 +248,19 @@ class UIPlanTree {
 
     }
 
-    private void hideOtherDrives(Node<ARPlanElement> node) {
+    private void hideAllOtherDrives(Node<ARPlanElement> node) {
+        if (isDrive(node)) {
+            for (Node<ARPlanElement> drive : root.getChildren()) {
+                if (!drive.getData().getName().equals(node.getData().getName())) {
+                    hideNodes(drive);
+                }
+            }
+        }else{
+            hideAllOtherDrives(node.getParent());
+        }
+    }
+
+    private void hideOtherDrivesChildren(Node<ARPlanElement> node) {
         if (isDrive(node)) {
             for (Node<ARPlanElement> drive : root.getChildren()) {
                 if (!drive.getData().getName().equals(node.getData().getName())) {
@@ -317,6 +321,13 @@ class UIPlanTree {
         return false;
     }
 
+    public boolean getAutomaticMode() {
+        return automaticMode;
+    }
+
+    public void setAutomaticMode(boolean automaticMode) {
+        this.automaticMode = automaticMode;
+    }
 
     public class Node<T>{
 

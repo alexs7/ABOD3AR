@@ -106,6 +106,28 @@
         fancy:fb_text="Show Server Data"
         fancy:fb_textColor="#FFFFFF" />
 
+    <mehdi.sakout.fancybuttons.FancyButton
+        android:id="@+id/automatic_mode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:paddingBottom="6dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="6dp"
+        app:layout_constraintStart_toStartOf="@+id/camera_frame_layout"
+        app:layout_constraintTop_toBottomOf="@+id/show_server_data"
+        fancy:fb_borderColor="#FFFFFF"
+        fancy:fb_borderWidth="1dp"
+        fancy:fb_defaultColor="#0068b8"
+        fancy:fb_focusColor="#2387d8"
+        fancy:fb_fontIconResource="&#xf1db;"
+        fancy:fb_iconPosition="left"
+        fancy:fb_radius="10dp"
+        fancy:fb_text="Disable Auto Mode"
+        fancy:fb_textColor="#FFFFFF" />
+
     <TextView
         android:id="@+id/server_response"
         android:layout_width="249dp"
