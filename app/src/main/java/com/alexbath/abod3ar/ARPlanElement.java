@@ -92,31 +92,4 @@ class ARPlanElement {
         return newCoordinates;
     }
 
-    public void addFlashingThread() {
-        Flasher flasher = new Flasher();
-        Thread thread = new Thread(flasher);
-        thread.start();
-    }
-
-    class Flasher implements Runnable {
-
-        @Override
-        public void run() {
-            while(true){
-                try {
-//                    if(element.getVisibility() == View.VISIBLE) {
-
-                    drawableBackground.setColor(Color.parseColor("#0000ff"));
-                        Thread.sleep(500);
-                        drawableBackground.setColor(Color.parseColor("#2f4f4f"));
-
-                        Thread.sleep(500);
-//                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-    }
 }

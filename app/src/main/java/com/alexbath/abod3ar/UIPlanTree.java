@@ -61,7 +61,7 @@ class UIPlanTree {
     public void updateNodesVisuals(String planElementName, Node<ARPlanElement> node) {
 
         if(node.getData().getName().equals(planElementName)){
-            //node.getData().setBackgroundColor(Color.parseColor("#0000ff"));
+            node.getData().setBackgroundColor(Color.parseColor("#0000ff"));
 
             if(automaticMode) {
                 if (isDrive(node.getParent())) {
@@ -329,20 +329,14 @@ class UIPlanTree {
         this.automaticMode = automaticMode;
     }
 
-    public void addFlashingThreadsToNodes() {
-        System.out.println("ONCE");
-        addFlashers(root);
-    }
+    public void setBackgroundColorNodes(Node<ARPlanElement> node) {
 
-    private void addFlashers(Node<ARPlanElement> node) {
+        if(node.getData().getView().getVisibility() == View.VISIBLE){
+            node.getData().setBackgroundColor(Color.parseColor("#2f4f4f"));
 
-        if(isRoot(node)){
-            node.getChildren().forEach(it -> addFlashers(it));
-        }else {
-
-            node.getData().addFlashingThread();
-            node.getChildren().forEach(it -> addFlashers(it));
         }
+
+        node.getChildren().forEach(it -> setBackgroundColorNodes(it));
     }
 
     public class Node<T>{

@@ -48,6 +48,7 @@ import georegression.struct.point.Point2D_I32;
 import georegression.struct.shapes.Quadrilateral_F64;
 import mehdi.sakout.fancybuttons.FancyButton;
 
+import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.CIRCULANT;
 import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.TLD;
 
 public class ObjectTrackerActivity extends Camera2Activity implements View.OnTouchListener {
@@ -75,11 +76,12 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
     private String serverIPAddress = null;
     private int serverPort;
     private ExecutorService networkExecutor = null;
+    private ExecutorService backgroundColorExecutor = null;
     private NetworkTask networkTask = null;
     private ScheduledExecutorService serverPingerScheduler;
+    private ScheduledExecutorService backgroundPingerScheduler;
     private UIPlanTree.Node<ARPlanElement> root = null;
     private UIPlanTree uiPlanTree = null;
-    private ExecutorService nodeFlasherExecutor = null;
 
     public enum TrackerType { // TODO: add the others later
         CIRCULANT,MEAN_SHIFT_LIKELIHOOD,MEAN_SHIFT,TLD,MEAN_SHIFT_SCALE,SPARSE_FLOW
@@ -191,15 +193,28 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
                 uiPlanTree.addNodes(root,driveCollections, getApplicationContext());
 
-                nodeFlasherExecutor = Executors.newSingleThreadExecutor();
-                nodeFlasherExecutor.execute(new Runnable() {
+                uiPlanTree.addNodesToUI(rootLayout,root);
+
+                backgroundColorExecutor = Executors.newSingleThreadExecutor();
+                backgroundPingerScheduler = Executors.newScheduledThreadPool(1);
+
+                backgroundColorExecutor.execute(new Runnable() {
                     @Override
                     public void run() {
-                        uiPlanTree.addFlashingThreadsToNodes();
+                        final Runnable backgroundPinger = new Runnable() {
+
+                            @Override
+                            public void run() {
+                                //System.out.println("pinger");
+                                uiPlanTree.setBackgroundColorNodes(root);
+                                //root.getChildren().get(2).getData().setBackgroundColor(Color.parseColor("#2f4f4f"));
+
+                            }
+                        };
+
+                        backgroundPingerScheduler.scheduleAtFixedRate(backgroundPinger, 30, 500, TimeUnit.MILLISECONDS);
                     }
                 });
-
-                uiPlanTree.addNodesToUI(rootLayout,root);
 
             }
         });
@@ -244,6 +259,13 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         }
 
         String[] splittedLine = ((String) msg.obj).split(" ");
+
+        if(splittedLine.length < 4){
+            serverTextView.setText("Invalid String: " + msg.obj + "\n" );
+            System.out.println("Invalid String: " + msg.obj + "\n" );
+            return;
+        }
+
         PlanElement planElement = null;
         String typeOfPlanElement;
         String planElementName = splittedLine[3];
@@ -253,7 +275,9 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
             if (!isActionPatternElement(typeOfPlanElement)) { //We ignore ActionPatternELements as they are instinct only
                 planElement = getPlanElement(typeOfPlanElement, planElement, planElementName);
                 if (planElement != null) {
-                    uiPlanTree.updateNodesVisuals(planElementName,root);
+                    if(uiPlanTree != null) {
+                        uiPlanTree.updateNodesVisuals(planElementName, root);
+                    }
                 }
             }
         }
@@ -301,7 +325,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
     @Override
     public void createNewProcessor() {
-        startObjectTracking(setTrackerType(TLD));
+        startObjectTracking(setTrackerType(CIRCULANT));
     }
 
     private void startObjectTracking(int pos) {
