@@ -74,6 +74,7 @@ class UIPlanTree {
 
                 if (node.getData().getView().getVisibility() == View.INVISIBLE && isDrive(node.getParent())) {
                     node.getData().getView().setVisibility(View.VISIBLE);
+                    node.getChildren().forEach(it -> it.getData().getView().setVisibility(View.VISIBLE));
                 }
             }
 
