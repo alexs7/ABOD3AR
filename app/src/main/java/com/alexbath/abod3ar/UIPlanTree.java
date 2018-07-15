@@ -50,7 +50,7 @@ class UIPlanTree {
 
     public void removeNodesFromUI(ConstraintLayout rootLayout, Node<ARPlanElement> node) {
         rootLayout.removeView(node.getData().getView());
-        node.getChildren().forEach(it -> removeNodesFromUI(rootLayout,it));
+        node.getChildren().forEach(it -> removeNodesFromUI(rootLayout, it));
     }
 
     public void hideNodes(Node<ARPlanElement> node) {
@@ -330,14 +330,14 @@ class UIPlanTree {
         this.automaticMode = automaticMode;
     }
 
-    public void setBackgroundColorNodes(Node<ARPlanElement> node) {
+    public void setDefaultBackgroundColorNodes(Node<ARPlanElement> node) {
 
         if(node.getData().getView().getVisibility() == View.VISIBLE){
+            System.out.println(node.getData().getUIName());
             node.getData().setBackgroundColor(Color.parseColor("#2f4f4f"));
-
         }
 
-        node.getChildren().forEach(it -> setBackgroundColorNodes(it));
+        node.getChildren().forEach(this::setDefaultBackgroundColorNodes);
     }
 
     public class Node<T>{

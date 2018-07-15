@@ -1,16 +1,13 @@
 package com.alexbath.abod3ar;
 
 import android.content.Context;
-import android.graphics.Color;
+import android.content.res.ColorStateList;
 import android.graphics.drawable.GradientDrawable;
 import android.view.View;
 import android.widget.TextView;
 
-import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
-
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import boofcv.struct.image.Color3_I32;
 import georegression.struct.point.Point2D_F64;
 
 class ARPlanElement {
@@ -22,11 +19,9 @@ class ARPlanElement {
     private String uIName;
     private int waitTime = 0;
     private static final int ARELEMENT_BACKGROUND_COLOR_CHANGE = 3;
-    private final AtomicBoolean running;
     private boolean dragging = false;
     private boolean dragged = false;
     private Point2D_F64 newCoordinates;
-    private int duration = 1500;
 
     public ARPlanElement(Context applicationContext, int priority, String name, int borderColor){
 
@@ -43,7 +38,6 @@ class ARPlanElement {
         this.drawableBackground = (GradientDrawable) element.getBackground();
 //        drawableForeground = (GradientDrawable) element.getForeground();
         this.drawableBackground.setStroke(2, borderColor);
-        this.running = new AtomicBoolean(true);
 
         this.newCoordinates = new Point2D_F64(0,0);
     }

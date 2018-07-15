@@ -3,6 +3,7 @@ package com.alexbath.abod3ar;
 import android.Manifest;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -48,7 +49,6 @@ import georegression.struct.point.Point2D_I32;
 import georegression.struct.shapes.Quadrilateral_F64;
 import mehdi.sakout.fancybuttons.FancyButton;
 
-import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.CIRCULANT;
 import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.TLD;
 
 public class ObjectTrackerActivity extends Camera2Activity implements View.OnTouchListener {
@@ -60,6 +60,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
     private Point2D_I32 click0 = new Point2D_I32();
     private Point2D_I32 click1 = new Point2D_I32();
     private FrameLayout surfaceLayout = null;
+    private ConstraintLayout overlayLayout = null;
     private FancyButton connectToServerbutton = null;
     private FancyButton loadPlanButton = null;
     private FancyButton automaticModeButton = null;
@@ -89,6 +90,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
     public ObjectTrackerActivity() {
         super(Resolution.R640x480);
+        //super.stretchToFill = true;
     }
 
     @Override
@@ -106,14 +108,15 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
-        planName = "plans/Plan6.inst";
-        serverIPAddress = "192.168.0.101";
+        planName = "plans/DiaPlan3.inst";
+        serverIPAddress = "192.168.178.21";
         serverPort = 3001;
 
         createGeneralHandler();
 
         rootLayout = findViewById(R.id.root_layout);
         surfaceLayout = findViewById(R.id.camera_frame_layout);
+        overlayLayout = findViewById(R.id.overlay_layout);
         serverTextView = (TextView) findViewById(R.id.server_response);
         serverTextView.setVisibility(View.INVISIBLE);
         serverTextView.setMovementMethod(new ScrollingMovementMethod());
@@ -168,7 +171,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
                         //create executor and start that will get the server requests
                         networkExecutor = Executors.newSingleThreadExecutor();
-                        serverPingerScheduler = Executors.newScheduledThreadPool(1);
+                        serverPingerScheduler = Executors.newSingleThreadScheduledExecutor();
                         networkTask = new NetworkTask(serverIPAddress, serverPort, generalHandler, serverPingerScheduler);
                         networkExecutor.execute(networkTask);
 
@@ -193,10 +196,10 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
                 uiPlanTree.addNodes(root,driveCollections, getApplicationContext());
 
-                uiPlanTree.addNodesToUI(rootLayout,root);
+                uiPlanTree.addNodesToUI(overlayLayout,root);
 
                 backgroundColorExecutor = Executors.newSingleThreadExecutor();
-                backgroundPingerScheduler = Executors.newScheduledThreadPool(1);
+                backgroundPingerScheduler = Executors.newSingleThreadScheduledExecutor();
 
                 backgroundColorExecutor.execute(new Runnable() {
                     @Override
@@ -205,8 +208,8 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
                             @Override
                             public void run() {
-                                //System.out.println("pinger");
-                                uiPlanTree.setBackgroundColorNodes(root);
+                                System.out.println("setDefaultBackgroundColorNodes(root)");
+                                uiPlanTree.setDefaultBackgroundColorNodes(root);
                                 //root.getChildren().get(2).getData().setBackgroundColor(Color.parseColor("#2f4f4f"));
 
                             }
@@ -290,9 +293,18 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
     }
 
     public void reset() {
+        stopExecutorService(networkExecutor);
+        stopExecutorService(backgroundColorExecutor);
         stopExecutorService(serverPingerScheduler);
+        stopExecutorService(backgroundPingerScheduler);
         generalHandler.removeCallbacksAndMessages(null);
-        uiPlanTree.removeNodesFromUI(rootLayout,root);
+
+        if(uiPlanTree != null) {
+            uiPlanTree.removeNodesFromUI(rootLayout, root);
+        }else{
+            uiPlanTree.removeNodesFromUI(rootLayout, root);
+        }
+
         root = null;
         uiPlanTree = null;
         mode = 0;
@@ -316,7 +328,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         }
 
         if(service.isTerminated() && service.isShutdown()){
-            Log.i("NETWORK_TASK", "SUCCESSFULL SHUTDOWN OF NETWORK_TASK");
+            Log.i("NETWORK_TASK", "SUCCESSFULL SHUTDOWN OF GENERIC ExecutorService");
             return true;
         }else{
             return false;
@@ -325,7 +337,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
     @Override
     public void createNewProcessor() {
-        startObjectTracking(setTrackerType(CIRCULANT));
+        startObjectTracking(setTrackerType(TLD));
     }
 
     private void startObjectTracking(int pos) {
@@ -526,10 +538,16 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
             if( mode >= 2 ) {
                 if( visible ) {
 
-//                    drawLine(canvas,location.a,location.b, bluePaint);
-//                    drawLine(canvas,location.b,location.c, greenPaint);
-//                    drawLine(canvas,location.c,location.d, yellowPaint);
-//                    drawLine(canvas,location.d,location.a, whitePaint);
+                    drawLine(canvas,location.a,location.b, bluePaint);
+                    drawLine(canvas,location.b,location.c, greenPaint);
+                    drawLine(canvas,location.c,location.d, yellowPaint);
+                    drawLine(canvas,location.d,location.a, whitePaint);
+
+//                    canvas.drawRect(0,0, 1000, 1000, greenPaint);
+//
+//                    canvas.drawPoint(1,1000,redPaint);
+//
+//                    canvas.drawRect(10,10, 500, 500, redPaint);
 
                     if(uiPlanTree != null){
 
@@ -545,9 +563,26 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                         canvas.drawCircle((float) imageCenter.x, (float) imageCenter.y, 10, yellowPaint);
                         canvas.drawCircle((float) imageCenter.x, (float) imageCenter.y, 6, redPaint);
 
-                        drawTree(root,startingXPoint,startingYPoint,viewCenter);
-                        drawTreeUIElementsConnectors(root,canvas,viewToImage,imageCenter);
-                        
+                       drawTree(root,startingXPoint,startingYPoint,viewCenter);
+                       drawTreeUIElementsConnectors(root,canvas,viewToImage,imageCenter);
+
+
+//                        float tempX = root.getChildren().get(1).getData().getView().getX() + 20;
+//                        float tempY = root.getChildren().get(1).getData().getView().getY() + 20;
+
+
+
+//                        Bitmap myBitmap = loadBitmapFromView(mView);
+//                        if(myBitmap != null ) {
+//                            int pixel = myBitmap.getPixel((int) tempX, (int) tempY);
+//                            int redValue = Color.red(pixel);
+//                            int blueValue = Color.blue(pixel);
+//                            int greenValue = Color.green(pixel);
+//
+//
+//                            System.out.println("Red is: " + redValue + " Green is: " + greenValue + " Blue is: " + blueValue);
+//                        }
+
                     }
 
                 } else {
@@ -555,6 +590,17 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                 }
             }
         }
+
+//        public Bitmap loadBitmapFromView(View v) {
+//            if(v.getLayoutParams().width != -1 && v.getLayoutParams().height != -1) {
+//                Bitmap b = Bitmap.createBitmap(v.getLayoutParams().width, v.getLayoutParams().height, Bitmap.Config.ARGB_8888);
+//                Canvas c = new Canvas(b);
+//                v.layout(0, 0, v.getLayoutParams().width, v.getLayoutParams().height);
+//                v.draw(c);
+//                return b;
+//            }
+//            return null;
+//        }
 
         private void drawTreeUIElementsConnectors(UIPlanTree.Node<ARPlanElement> node, Canvas canvas, Matrix viewToImage, Point2D_F64 imageCenter) {
 
