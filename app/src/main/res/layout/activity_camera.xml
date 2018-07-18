@@ -139,7 +139,7 @@
 
     <TextView
         android:id="@+id/server_response"
-        android:layout_width="249dp"
+        android:layout_width="210dp"
         android:layout_height="96dp"
         android:background="#59000000"
         android:gravity="bottom"
@@ -149,11 +149,34 @@
         android:textSize="10sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.038"
+        app:layout_constraintHorizontal_bias="0.958"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.939" />
+        app:layout_constraintVertical_bias="0.933" />
+
+    <mehdi.sakout.fancybuttons.FancyButton
+        android:id="@+id/go_back_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:layout_marginStart="8dp"
+        android:paddingBottom="6dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="6dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toRightOf="@+id/camera_frame_layout"
+        app:layout_constraintStart_toStartOf="@+id/camera_frame_layout"
+        fancy:fb_borderColor="#FFFFFF"
+        fancy:fb_borderWidth="1dp"
+        fancy:fb_defaultColor="#0068b8"
+        fancy:fb_focusColor="#2387d8"
+        fancy:fb_fontIconResource="&#xf060;"
+        fancy:fb_iconPosition="left"
+        fancy:fb_radius="10dp"
+        fancy:fb_text="Go Back"
+        fancy:fb_textColor="#FFFFFF" />
 
 </android.support.constraint.ConstraintLayout>

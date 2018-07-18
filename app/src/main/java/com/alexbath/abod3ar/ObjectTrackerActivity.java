@@ -67,6 +67,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
     private TextView serverTextView = null;
     private FancyButton reset_button = null;
     private FancyButton showServerDataButton = null;
+    private FancyButton goBackButton = null;
     private ConstraintLayout rootLayout = null;
     private boolean showServerData = false;
     private static final int SERVER_RESPONSE = 1;
@@ -125,6 +126,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         showServerDataButton = findViewById(R.id.show_server_data);
         automaticModeButton = findViewById(R.id.automatic_mode);
         reset_button = findViewById(R.id.reset_button);
+        goBackButton = findViewById(R.id.go_back_button);
 
         startCamera(surfaceLayout,null);
         displayView.setOnTouchListener(this);
@@ -140,6 +142,13 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                         uiPlanTree.setAutomaticMode(true);
                     }
                 }
+            }
+        });
+
+        goBackButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                uiPlanTree.setFocusedNode(root.getChildren().get(0));
             }
         });
 
@@ -191,12 +200,9 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                 List<DriveCollection> driveCollections = PlanLoader.loadPlanFile(planName, getApplicationContext());
 
                 //createTree
-                uiPlanTree = new UIPlanTree(driveCollections,getApplicationContext());
+                uiPlanTree = new UIPlanTree(driveCollections,getApplicationContext(),overlayLayout);
                 root = uiPlanTree.getRoot();
-
-                uiPlanTree.addNodes(root,driveCollections, getApplicationContext());
-
-                uiPlanTree.addNodesToUI(overlayLayout,root);
+                uiPlanTree.addNodesToUI(root);
 
                 backgroundColorExecutor = Executors.newSingleThreadExecutor();
                 backgroundPingerScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -208,14 +214,11 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
                             @Override
                             public void run() {
-                                System.out.println("setDefaultBackgroundColorNodes(root)");
                                 uiPlanTree.setDefaultBackgroundColorNodes(root);
-                                //root.getChildren().get(2).getData().setBackgroundColor(Color.parseColor("#2f4f4f"));
-
                             }
                         };
 
-                        backgroundPingerScheduler.scheduleAtFixedRate(backgroundPinger, 30, 500, TimeUnit.MILLISECONDS);
+                        backgroundPingerScheduler.scheduleAtFixedRate(backgroundPinger, 30, 300, TimeUnit.MILLISECONDS);
                     }
                 });
 
@@ -557,31 +560,15 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                         //view = canvas
                         Point2D_F64 viewCenter = getViewCenter(location, imageToView);
 
-                        int startingXPoint = 100 - root.getData().getView().getWidth() / 2;
-                        int startingYPoint = - root.getData().getView().getHeight() / 2;
+                        int startingXPoint = 60 - root.getData().getView().getWidth() / 2;
+                        int startingYPoint = 60 - root.getData().getView().getHeight() / 2;
 
                         canvas.drawCircle((float) imageCenter.x, (float) imageCenter.y, 10, yellowPaint);
                         canvas.drawCircle((float) imageCenter.x, (float) imageCenter.y, 6, redPaint);
 
-                       drawTree(root,startingXPoint,startingYPoint,viewCenter);
-                       drawTreeUIElementsConnectors(root,canvas,viewToImage,imageCenter);
+                        uiPlanTree.draw(startingXPoint,startingYPoint,viewCenter);
+                        //drawTreeUIElementsConnectors(root,canvas,viewToImage,imageCenter);
 
-
-//                        float tempX = root.getChildren().get(1).getData().getView().getX() + 20;
-//                        float tempY = root.getChildren().get(1).getData().getView().getY() + 20;
-
-
-
-//                        Bitmap myBitmap = loadBitmapFromView(mView);
-//                        if(myBitmap != null ) {
-//                            int pixel = myBitmap.getPixel((int) tempX, (int) tempY);
-//                            int redValue = Color.red(pixel);
-//                            int blueValue = Color.blue(pixel);
-//                            int greenValue = Color.green(pixel);
-//
-//
-//                            System.out.println("Red is: " + redValue + " Green is: " + greenValue + " Blue is: " + blueValue);
-//                        }
 
                     }
 
@@ -590,17 +577,6 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                 }
             }
         }
-
-//        public Bitmap loadBitmapFromView(View v) {
-//            if(v.getLayoutParams().width != -1 && v.getLayoutParams().height != -1) {
-//                Bitmap b = Bitmap.createBitmap(v.getLayoutParams().width, v.getLayoutParams().height, Bitmap.Config.ARGB_8888);
-//                Canvas c = new Canvas(b);
-//                v.layout(0, 0, v.getLayoutParams().width, v.getLayoutParams().height);
-//                v.draw(c);
-//                return b;
-//            }
-//            return null;
-//        }
 
         private void drawTreeUIElementsConnectors(UIPlanTree.Node<ARPlanElement> node, Canvas canvas, Matrix viewToImage, Point2D_F64 imageCenter) {
 
@@ -639,88 +615,6 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                     drawTreeUIElementsConnectors(node.getChildren().get(i),canvas,viewToImage,imageCenter);
                 }
             }
-        }
-
-        private void drawTree(UIPlanTree.Node<ARPlanElement> node, int widthAppender, int heightAppender, Point2D_F64 viewCenter) {
-
-            if(node.getData().getDragging()){
-                return;
-            }
-
-            if(node.getParent() == null ){
-                node.getData().getView().setX((float) ( viewCenter.x + widthAppender  ));
-                node.getData().getView().setY((float) ( viewCenter.y + heightAppender ));
-
-                widthAppender = widthAppender + node.getData().getView().getWidth() + 12;
-
-                int childrenTotalHeight = 0;
-
-                for (int i = 0; i < node.getChildren().size(); i++){
-                    childrenTotalHeight += node.getChildren().get(i).getData().getView().getHeight();
-                }
-
-                int heightOffset = 0;
-
-                if(node.getChildren().size() == 1){
-                    heightOffset = 0;
-                }else if(node.getChildren().size() % 2 == 0){
-                    heightOffset = childrenTotalHeight/2;
-                }else if(node.getChildren().size() % 2 != 0){
-                    heightOffset = childrenTotalHeight/3;
-                }
-
-                for (int i = 0; i < node.getChildren().size(); i++){
-                    drawTree(node.getChildren().get(i), widthAppender, heightAppender - heightOffset,viewCenter);
-                    heightAppender = heightAppender + node.getData().getView().getHeight() + 12;
-                }
-            }else{
-
-                if(node.getData().getDragged()){
-
-                    stabilizeNode(node);
-
-
-                }else {
-
-                    node.getData().getView().setX((float) (viewCenter.x + widthAppender));
-                    node.getData().getView().setY((float) (viewCenter.y + heightAppender));
-
-                    widthAppender = widthAppender + node.getData().getView().getWidth() + 12;
-
-                    int childrenTotalHeight = 0;
-                    ;
-
-                    for (int i = 0; i < node.getChildren().size(); i++) {
-                        childrenTotalHeight += node.getChildren().get(i).getData().getView().getHeight();
-                    }
-
-                    int heightOffset = 0;
-
-                    if (node.getChildren().size() == 1) {
-                        heightOffset = 0;
-                    } else if (node.getChildren().size() % 2 == 0) {
-                        heightOffset = (int) (childrenTotalHeight / 2.6);
-                    } else if (node.getChildren().size() % 2 != 0) {
-                        heightOffset = childrenTotalHeight / 3;
-                    }
-
-                    for (int i = 0; i < node.getChildren().size(); i++) {
-                        drawTree(node.getChildren().get(i), widthAppender, heightAppender - heightOffset, viewCenter);
-                        heightAppender = heightAppender + node.getData().getView().getHeight() + 12;
-                    }
-                }
-            }
-
-        }
-
-        private void stabilizeNode(UIPlanTree.Node<ARPlanElement> node) {
-            node.getData().getView().setX((float) (node.getParent().getData().getView().getX() - node.getData().getNewCoordinates().x));
-            node.getData().getView().setY((float) (node.getParent().getData().getView().getY() - node.getData().getNewCoordinates().y));
-
-            for (int i = 0; i < node.getChildren().size(); i++){
-                stabilizeNode(node.getChildren().get(i));
-            }
-
         }
 
         private void updateNodeRecursively(UIPlanTree.Node<ARPlanElement> node , double dx, double dy) {
