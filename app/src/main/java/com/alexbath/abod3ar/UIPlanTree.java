@@ -15,6 +15,7 @@ import com.recklesscoding.abode.core.plan.planelements.drives.DriveCollection;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Stack;
 
 import georegression.struct.point.Point2D_F64;
 
@@ -25,22 +26,22 @@ class UIPlanTree {
     public Node<ARPlanElement> root = null;
     public boolean automaticMode = true;
     private Node<ARPlanElement> focusedNode = null;
+    private Stack<Node<ARPlanElement>> historyNodes = new Stack<>();
 
     public UIPlanTree(List<DriveCollection> driveCollections, Context context, ConstraintLayout overlayLayout) {
+
         this.driveCollections = driveCollections;
         this.root = new Node<>(new ARPlanElement(context, 0,"Drives", Color.YELLOW));
         this.overlayLayout = overlayLayout;
 
         createNodes(root,driveCollections,context);
-
-        setFocusedNode(root);
     }
 
     public Node<ARPlanElement> getRoot() {
         return root;
     }
 
-    public void drawTree(UIPlanTree.Node<ARPlanElement> node, int widthAppender, int heightAppender, Point2D_F64 viewCenter) {
+    public void setUpTreeRender(UIPlanTree.Node<ARPlanElement> node, int widthAppender, int heightAppender, Point2D_F64 viewCenter) {
 
         if(node.getData().getDragging()){
             return;
@@ -69,7 +70,7 @@ class UIPlanTree {
             }
 
             for (int i = 0; i < node.getChildren().size(); i++){
-                drawTree(node.getChildren().get(i), widthAppender, heightAppender - heightOffset,viewCenter);
+                setUpTreeRender(node.getChildren().get(i), widthAppender, heightAppender - heightOffset,viewCenter);
                 heightAppender = heightAppender + node.getData().getView().getHeight() + 12;
             }
         }else{
@@ -103,7 +104,7 @@ class UIPlanTree {
                 }
 
                 for (int i = 0; i < node.getChildren().size(); i++) {
-                    drawTree(node.getChildren().get(i), widthAppender, heightAppender - heightOffset, viewCenter);
+                    setUpTreeRender(node.getChildren().get(i), widthAppender, heightAppender - heightOffset, viewCenter);
                     heightAppender = heightAppender + node.getData().getView().getHeight() + 12;
                 }
             }
@@ -121,18 +122,6 @@ class UIPlanTree {
 
     }
 
-    public void addNodesToUI(Node<ARPlanElement> node) {
-
-//        if(node.getParent() == null || node.getParent().getParent() == null ){
-//            node.getData().getView().setVisibility(View.VISIBLE);
-//        }else{
-//            //node.getData().getView().setVisibility(View.INVISIBLE);
-//        }
-
-        overlayLayout.addView(node.getData().getView());
-
-        node.getChildren().forEach(it -> addNodesToUI(it));
-    }
 
     public void removeNodesFromUI(ConstraintLayout rootLayout, Node<ARPlanElement> node) {
         rootLayout.removeView(node.getData().getView());
@@ -144,32 +133,66 @@ class UIPlanTree {
         node.getChildren().forEach(it -> hideNodes(it));
     }
 
-    public void updateNodesVisuals(String planElementName, Node<ARPlanElement> node) {
+    public void updateNodesVisuals(String planElementName, Node<ARPlanElement> node) { //focusedNode
 
         if(node.getData().getName().equals(planElementName)){
             node.getData().setBackgroundColor(Color.parseColor("#0000ff"));
 
-            if(automaticMode) {
-                if (isDrive(node.getParent())) {
-                    hideOtherDrivesChildren(node.getParent());
-                }
+        }
 
-                if (isDrive(node) && node.getChildren().isEmpty()) {
-                    hideOtherDrivesChildren(node);
-                }
+        for (Node<ARPlanElement> child : node.getChildren()){
 
-                if (node.getData().getView().getVisibility() == View.INVISIBLE && isDrive(node.getParent())) {
-                    node.getData().getView().setVisibility(View.VISIBLE);
-                    node.getChildren().forEach(it -> it.getData().getView().setVisibility(View.VISIBLE));
-                }
+            if(child.getData().getName().equals(planElementName)){
+                child.getData().setBackgroundColor(Color.parseColor("#0000ff"));
             }
-
-        }else{
-            //node.getData().setBackgroundColor(Color.parseColor("#2f4f4f"));
 
         }
 
-        node.getChildren().forEach(it -> updateNodesVisuals(planElementName, it));
+        for (Node<ARPlanElement> child : node.getChildren()){
+
+            for (Node<ARPlanElement> grandChild : child.getChildren()){
+
+                if(grandChild.getData().getName().equals(planElementName)){
+
+                    grandChild.getData().getView().setVisibility(View.VISIBLE);
+                    grandChild.getData().setBackgroundColor(Color.parseColor("#0000ff"));
+
+                }else{
+
+                    grandChild.getData().getView().setVisibility(View.INVISIBLE);
+
+                }
+
+            }
+
+        }
+
+//            node.getData().setBackgroundColor(Color.parseColor("#0000ff"));
+
+//            if(automaticMode) {
+
+
+
+//                if (isDrive(node.getParent())) {
+//                    hideOtherDrivesChildren(node.getParent());
+//                }
+//
+//                if (isDrive(node) && node.getChildren().isEmpty()) {
+//                    hideOtherDrivesChildren(node);
+//                }
+//
+//                if (node.getData().getView().getVisibility() == View.INVISIBLE && isDrive(node.getParent())) {
+//                    node.getData().getView().setVisibility(View.VISIBLE);
+//                    node.getChildren().forEach(it -> it.getData().getView().setVisibility(View.VISIBLE));
+//                }
+//            }
+//
+//        }else{
+//            //node.getData().setBackgroundColor(Color.parseColor("#2f4f4f"));
+//
+//        }
+
+//        node.getChildren().forEach(it -> updateNodesVisuals(planElementName, it));
     }
 
     public void createNodes(Node<ARPlanElement> node, Object obj, Context context) {
@@ -333,21 +356,39 @@ class UIPlanTree {
         node.getChildren().forEach(this::setDefaultBackgroundColorNodes);
     }
 
-    public void draw(int startingXPoint, int startingYPoint, Point2D_F64 viewCenter) {
-        this.drawTree(this.getFocusedNode(),startingXPoint,startingYPoint,viewCenter);
-    }
-
-    private Node<ARPlanElement> getFocusedNode() {
+    public Node<ARPlanElement> getFocusedNode() {
         return focusedNode;
     }
 
     public void setFocusedNode(Node<ARPlanElement> focusedNode) {
 
+        focusedNode.getData().getView().setVisibility(View.VISIBLE);
+
         hideNodeParents(focusedNode);
         hideNodeSiblings(focusedNode);
+        showNodeChildren(focusedNode);
+
+        System.out.println("Setting focused node to: "+focusedNode.getData().getUIName());
 
         this.focusedNode = focusedNode;
     }
+
+    public void setUpTree(int startingXPoint, int startingYPoint, Point2D_F64 viewCenter) {
+        this.setUpTreeRender(this.getFocusedNode(),startingXPoint,startingYPoint,viewCenter);
+    }
+
+    private void showNodeChildren(Node<ARPlanElement> node) {
+
+        hideNodes(node);
+
+        node.getData().getView().setVisibility(View.VISIBLE);
+
+        for(Node<ARPlanElement> child : node.getChildren()){
+            child.getData().getView().setVisibility(View.VISIBLE);
+        }
+
+    }
+
 
     private void hideNodeSiblings(Node<ARPlanElement> node) {
 
@@ -366,6 +407,55 @@ class UIPlanTree {
             node.getParent().getData().getView().setVisibility(View.INVISIBLE);
             hideNodeParents(node.getParent());
         }
+    }
+
+    public void addNodesToUI(Node<ARPlanElement> node) {
+
+//        if(node.getParent() == null || node.getParent().getParent() == null ){
+//            node.getData().getView().setVisibility(View.VISIBLE);
+//        }else{
+//            //node.getData().getView().setVisibility(View.INVISIBLE);
+//        }
+
+        node.getData().getView().setVisibility(View.INVISIBLE);
+        overlayLayout.addView(node.getData().getView());
+
+        node.getChildren().forEach(it -> addNodesToUI(it));
+    }
+
+    public void addNodeToUI(Node<ARPlanElement> node){
+        overlayLayout.addView(node.getData().getView());
+    }
+
+    public void renderPreviousState() {
+
+        if(!historyNodes.empty()){
+            setFocusedNode(historyNodes.pop());
+        }
+
+    }
+
+    public void initState() {
+
+        addNodesToUI(root);
+
+        if(historyNodes.empty()) { //first time
+
+            setFocusedNode(root);
+
+            root.getData().getView().setVisibility(View.VISIBLE);
+
+            for (Node<ARPlanElement> child : root.getChildren()) {
+                child.getData().getView().setVisibility(View.VISIBLE);
+
+            }
+
+        }
+
+    }
+
+    public void saveState(Node<ARPlanElement> node) {
+        historyNodes.push(node);
     }
 
     public class Node<T>{

@@ -34,6 +34,8 @@ class ARPlanElement {
         }
 
         this.element = (TextView) View.inflate(applicationContext, R.layout.plan_element, null);
+        //this.element.setVisibility(View.INVISIBLE);
+
         this.element.setText(uIName);
         this.drawableBackground = (GradientDrawable) element.getBackground();
 //        drawableForeground = (GradientDrawable) element.getForeground();

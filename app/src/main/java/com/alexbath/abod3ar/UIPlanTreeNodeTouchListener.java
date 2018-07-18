@@ -5,8 +5,8 @@ import android.view.View;
 
 class UIPlanTreeNodeTouchListener implements View.OnTouchListener {
 
-    private final UIPlanTree uiPlanTree;
-    private final UIPlanTree.Node<ARPlanElement> node;
+    private UIPlanTree uiPlanTree;
+    private UIPlanTree.Node<ARPlanElement> node;
     private boolean automaticMode = false;
     private float endY;
     private float endX;
@@ -35,9 +35,9 @@ class UIPlanTreeNodeTouchListener implements View.OnTouchListener {
                 startX = event.getRawX();
                 startY = event.getRawY();
 
-                if(!uiPlanTree.isRoot(node)) {
-                    uiPlanTree.setNodeToDragging(node, true);
-                }
+//                if(!uiPlanTree.isRoot(node)) {
+//                    uiPlanTree.setNodeToDragging(node, true);
+//                }
 
                 System.out.println("ACTION_DOWN");
                 dX = node.getData().getView().getX() - event.getRawX();
@@ -48,9 +48,9 @@ class UIPlanTreeNodeTouchListener implements View.OnTouchListener {
             case MotionEvent.ACTION_MOVE:
                 System.out.println("ACTION_MOVE");
 
-                if(!uiPlanTree.isRoot(node)) {
-                    uiPlanTree.updateNodeXY(node, event, dX, dY, 0, 0);
-                }
+//                if(!uiPlanTree.isRoot(node)) {
+//                    uiPlanTree.updateNodeXY(node, event, dX, dY, 0, 0);
+//                }
 
                 break;
 
@@ -59,14 +59,20 @@ class UIPlanTreeNodeTouchListener implements View.OnTouchListener {
                 endX = event.getRawX();
                 endY = event.getRawY();
 
-                if(!uiPlanTree.isRoot(node)) {
-                    uiPlanTree.setNodeToDragging(node, false);
-                    uiPlanTree.setDragged(node);
-                }
+//                if(!uiPlanTree.isRoot(node)) {
+//                    uiPlanTree.setNodeToDragging(node, false);
+//                    uiPlanTree.setDragged(node);
+//                }
 
                 if (isAClick(startX, endX, startY, endY)) {
 
                     System.out.println("CLICK!");
+
+                    uiPlanTree.saveState(node.getParent());
+
+                    uiPlanTree.hideNodes(uiPlanTree.getRoot());
+
+                    uiPlanTree.setFocusedNode(node);
 
 
 

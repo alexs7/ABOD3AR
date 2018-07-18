@@ -82,7 +82,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
     private NetworkTask networkTask = null;
     private ScheduledExecutorService serverPingerScheduler;
     private ScheduledExecutorService backgroundPingerScheduler;
-    private UIPlanTree.Node<ARPlanElement> root = null;
+    //private UIPlanTree.Node<ARPlanElement> root = null;
     private UIPlanTree uiPlanTree = null;
 
     public enum TrackerType { // TODO: add the others later
@@ -148,7 +148,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         goBackButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                uiPlanTree.setFocusedNode(root.getChildren().get(0));
+                uiPlanTree.renderPreviousState();
             }
         });
 
@@ -201,8 +201,8 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
                 //createTree
                 uiPlanTree = new UIPlanTree(driveCollections,getApplicationContext(),overlayLayout);
-                root = uiPlanTree.getRoot();
-                uiPlanTree.addNodesToUI(root);
+                //root = uiPlanTree.getRoot();
+                uiPlanTree.initState();
 
                 backgroundColorExecutor = Executors.newSingleThreadExecutor();
                 backgroundPingerScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -214,7 +214,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
                             @Override
                             public void run() {
-                                uiPlanTree.setDefaultBackgroundColorNodes(root);
+                                uiPlanTree.setDefaultBackgroundColorNodes(uiPlanTree.getRoot());
                             }
                         };
 
@@ -282,7 +282,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                 planElement = getPlanElement(typeOfPlanElement, planElement, planElementName);
                 if (planElement != null) {
                     if(uiPlanTree != null) {
-                        uiPlanTree.updateNodesVisuals(planElementName, root);
+                        uiPlanTree.updateNodesVisuals(planElementName, uiPlanTree.getFocusedNode());
                     }
                 }
             }
@@ -303,12 +303,12 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         generalHandler.removeCallbacksAndMessages(null);
 
         if(uiPlanTree != null) {
-            uiPlanTree.removeNodesFromUI(rootLayout, root);
+            uiPlanTree.removeNodesFromUI(rootLayout, uiPlanTree.getRoot());
         }else{
-            uiPlanTree.removeNodesFromUI(rootLayout, root);
+            uiPlanTree.removeNodesFromUI(rootLayout, uiPlanTree.getRoot());
         }
 
-        root = null;
+        //root = null;
         uiPlanTree = null;
         mode = 0;
         networkExecutor = null;
@@ -554,19 +554,17 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
                     if(uiPlanTree != null){
 
-                        root = uiPlanTree.getRoot();
-
                         Point2D_F64 imageCenter = getImageCenter(location);
                         //view = canvas
                         Point2D_F64 viewCenter = getViewCenter(location, imageToView);
 
-                        int startingXPoint = 60 - root.getData().getView().getWidth() / 2;
-                        int startingYPoint = 60 - root.getData().getView().getHeight() / 2;
+                        int startingXPoint = 60 - uiPlanTree.getFocusedNode().getData().getView().getWidth() / 2;
+                        int startingYPoint = 60 - uiPlanTree.getFocusedNode().getData().getView().getHeight() / 2;
 
                         canvas.drawCircle((float) imageCenter.x, (float) imageCenter.y, 10, yellowPaint);
                         canvas.drawCircle((float) imageCenter.x, (float) imageCenter.y, 6, redPaint);
 
-                        uiPlanTree.draw(startingXPoint,startingYPoint,viewCenter);
+                        uiPlanTree.setUpTree(startingXPoint,startingYPoint,viewCenter);
                         //drawTreeUIElementsConnectors(root,canvas,viewToImage,imageCenter);
 
 
