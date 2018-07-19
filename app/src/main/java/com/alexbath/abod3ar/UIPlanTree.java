@@ -121,6 +121,9 @@ class UIPlanTree {
 
     public void updateNodesVisuals(String planElementName, Node<ARPlanElement> node) { //focusedNode
 
+
+        
+
         if(node.getData().getName().equals(planElementName)){
             node.getData().setBackgroundColor(flashColor);
 

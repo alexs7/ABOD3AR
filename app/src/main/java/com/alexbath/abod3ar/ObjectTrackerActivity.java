@@ -516,16 +516,10 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
             if( mode >= 2 ) {
                 if( visible ) {
 
-                    drawLine(canvas,location.a,location.b, bluePaint);
-                    drawLine(canvas,location.b,location.c, greenPaint);
-                    drawLine(canvas,location.c,location.d, yellowPaint);
-                    drawLine(canvas,location.d,location.a, whitePaint);
-
-//                    canvas.drawRect(0,0, 1000, 1000, greenPaint);
-//
-//                    canvas.drawPoint(1,1000,redPaint);
-//
-//                    canvas.drawRect(10,10, 500, 500, redPaint);
+//                    drawLine(canvas,location.a,location.b, bluePaint);
+//                    drawLine(canvas,location.b,location.c, greenPaint);
+//                    drawLine(canvas,location.c,location.d, yellowPaint);
+//                    drawLine(canvas,location.d,location.a, whitePaint);
 
                     if(uiPlanTree != null){
 
@@ -536,8 +530,8 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                         int startingXPoint =  (- uiPlanTree.getFocusedNode().getData().getView().getWidth() / 2) + 80 ;
                         int startingYPoint =  (- uiPlanTree.getFocusedNode().getData().getView().getHeight() / 2) + 80 ;
 
-                        canvas.drawCircle((float) imageCenter.x, (float) imageCenter.y, 10, yellowPaint);
-                        canvas.drawCircle((float) imageCenter.x, (float) imageCenter.y, 6, redPaint);
+                        canvas.drawCircle((float) imageCenter.x, (float) imageCenter.y, 8, yellowPaint);
+                        canvas.drawCircle((float) imageCenter.x, (float) imageCenter.y, 5, redPaint);
 
                         uiPlanTree.setUpTree(startingXPoint,startingYPoint,viewCenter);
 
@@ -547,11 +541,10 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                             drawTreeUIElementsConnectorsInitState(uiPlanTree.getRoot(),canvas,viewToImage,imageCenter);
                         }
 
-
                     }
 
                 } else {
-                    canvas.drawText("X",width/2,height/2, textPaint);
+                    canvas.drawText("x",width/2,height/2, textPaint);
                 }
             }
         }
