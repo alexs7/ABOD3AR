@@ -68,7 +68,7 @@ class UIPlanTreeNodeTouchListener implements View.OnTouchListener {
 
                     System.out.println("CLICK!");
 
-                    uiPlanTree.saveState(node.getParent());
+                    //uiPlanTree.saveState(node.getParent());
 
                     uiPlanTree.hideNodes(uiPlanTree.getRoot());
 

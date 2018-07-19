@@ -46,11 +46,13 @@ class UIPlanTree {
 
     public void setUpTreeRender(UIPlanTree.Node<ARPlanElement> node, int widthAppender, int heightAppender, Point2D_F64 viewCenter) {
 
-        if(node.getData().getDragging()){
-            return;
+        if(focusedNode.getParent() != null) {
+            focusedNode.getParent().getData().getView().setX((float) (viewCenter.x - focusedNode.getParent().getData().getView().getWidth()) - 40);
+            focusedNode.getParent().getData().getView().setY((float) (viewCenter.y - focusedNode.getParent().getData().getView().getHeight()) - 40);
         }
 
         if(node.getParent() == null ){
+
             node.getData().getView().setX((float) ( viewCenter.x + widthAppender  ));
             node.getData().getView().setY((float) ( viewCenter.y + heightAppender ));
 
@@ -78,38 +80,30 @@ class UIPlanTree {
             }
         }else{
 
-            if(node.getData().getDragged()){
+            node.getData().getView().setX((float) (viewCenter.x + widthAppender));
+            node.getData().getView().setY((float) (viewCenter.y + heightAppender));
 
-                stabilizeNode(node);
+            widthAppender = widthAppender + node.getData().getView().getWidth() + nodeWidthSeperation;
 
+            int childrenTotalHeight = 0;
 
-            }else {
+            for (int i = 0; i < node.getChildren().size(); i++) {
+                childrenTotalHeight += node.getChildren().get(i).getData().getView().getHeight();
+            }
 
-                node.getData().getView().setX((float) (viewCenter.x + widthAppender));
-                node.getData().getView().setY((float) (viewCenter.y + heightAppender));
+            int heightOffset = 0;
 
-                widthAppender = widthAppender + node.getData().getView().getWidth() + nodeWidthSeperation;
+            if (node.getChildren().size() == 1) {
+                heightOffset = 0;
+            } else if (node.getChildren().size() % 2 == 0) {
+                heightOffset = (int) (childrenTotalHeight / 2.6);
+            } else if (node.getChildren().size() % 2 != 0) {
+                heightOffset = childrenTotalHeight / 3;
+            }
 
-                int childrenTotalHeight = 0;
-
-                for (int i = 0; i < node.getChildren().size(); i++) {
-                    childrenTotalHeight += node.getChildren().get(i).getData().getView().getHeight();
-                }
-
-                int heightOffset = 0;
-
-                if (node.getChildren().size() == 1) {
-                    heightOffset = 0;
-                } else if (node.getChildren().size() % 2 == 0) {
-                    heightOffset = (int) (childrenTotalHeight / 2.6);
-                } else if (node.getChildren().size() % 2 != 0) {
-                    heightOffset = childrenTotalHeight / 3;
-                }
-
-                for (int i = 0; i < node.getChildren().size(); i++) {
-                    setUpTreeRender(node.getChildren().get(i), widthAppender, heightAppender - heightOffset, viewCenter);
-                    heightAppender = heightAppender + node.getData().getView().getHeight() + nodeHeightSeperation;
-                }
+            for (int i = 0; i < node.getChildren().size(); i++) {
+                setUpTreeRender(node.getChildren().get(i), widthAppender, heightAppender - heightOffset, viewCenter);
+                heightAppender = heightAppender + node.getData().getView().getHeight() + nodeHeightSeperation;
             }
         }
 
@@ -365,10 +359,14 @@ class UIPlanTree {
 
     public void setFocusedNode(Node<ARPlanElement> focusedNode) {
 
-        focusedNode.getData().getView().setVisibility(View.VISIBLE);
+        if(focusedNode.getParent() != null) {
+            focusedNode.getParent().getData().getView().setVisibility(View.VISIBLE);
+        }
 
-        hideNodeParents(focusedNode);
+        //hideNodeParents(focusedNode);
+
         hideNodeSiblings(focusedNode);
+
         showNodeChildren(focusedNode);
 
         //System.out.println("Setting focused node to: "+focusedNode.getData().getUIName());
