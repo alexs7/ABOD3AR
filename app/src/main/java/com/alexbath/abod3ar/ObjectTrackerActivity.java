@@ -586,6 +586,8 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
                         if(uiPlanTree.getFocusedNode().getParent() != null){
                             drawTreeUIElementsConnectors(uiPlanTree.getFocusedNode().getParent(),canvas,viewToImage,imageCenter);
+                        }else{
+                            drawTreeUIElementsConnectorsInitState(uiPlanTree.getRoot(),canvas,viewToImage,imageCenter);
                         }
 
 
@@ -593,6 +595,45 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
                 } else {
                     canvas.drawText("X",width/2,height/2, textPaint);
+                }
+            }
+        }
+
+        private void drawTreeUIElementsConnectorsInitState(UIPlanTree.Node<ARPlanElement> node, Canvas canvas, Matrix viewToImage, Point2D_F64 imageCenter) {
+
+            if(uiPlanTree.isFocusedNode(node)) {
+
+                Point2D_F64 rootAnchor = new Point2D_F64();
+                applyToPoint(viewToImage, node.getData().getView().getX() + node.getData().getView().getWidth()/2,node.getData().getView().getY() + node.getData().getView().getHeight()/2, rootAnchor);
+
+                drawLine(canvas, imageCenter, rootAnchor, redPaint);
+
+                for (UIPlanTree.Node<ARPlanElement> child : node.getChildren()){
+                    Point2D_F64 childAnchor = new Point2D_F64();
+                    applyToPoint(viewToImage, child.getData().getView().getX(),child.getData().getView().getY() + child.getData().getView().getHeight()/2, childAnchor);
+
+                    if(child.getData().getView().getVisibility() == View.VISIBLE){
+                        drawLine(canvas, rootAnchor, childAnchor, redPaint);
+                    }
+
+                    drawTreeUIElementsConnectorsInitState(child,canvas,viewToImage,imageCenter);
+                }
+
+            }else{
+                Point2D_F64 parentAnchor = new Point2D_F64();
+                applyToPoint(viewToImage, node.getData().getView().getX() + node.getData().getView().getWidth(),node.getData().getView().getY() + node.getData().getView().getHeight()/2, parentAnchor);
+
+                for (UIPlanTree.Node<ARPlanElement> child : node.getChildren()){
+                    Point2D_F64 childAnchor = new Point2D_F64();
+                    applyToPoint(viewToImage, child.getData().getView().getX(),child.getData().getView().getY() + child.getData().getView().getHeight()/2, childAnchor);
+
+                    if(child.getData().getView().getVisibility() == View.VISIBLE){
+                        drawLine(canvas, parentAnchor, childAnchor, redPaint);
+                    }
+                }
+
+                for (int i = 0; i < node.getChildren().size(); i++){
+                    drawTreeUIElementsConnectorsInitState(node.getChildren().get(i),canvas,viewToImage,imageCenter);
                 }
             }
         }
