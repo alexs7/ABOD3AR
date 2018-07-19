@@ -28,6 +28,8 @@ class UIPlanTree {
     private int nodeWidthSeperation = 24;
     private int nodeHeightSeperation = 16;
     private boolean showingMore = false;
+    private int flashColor = Color.parseColor("#0000ff");
+    private int backgroundColor = Color.parseColor("#2f4f4f");
 
     public UIPlanTree(List<DriveCollection> driveCollections, Context context, ConstraintLayout overlayLayout) {
 
@@ -120,13 +122,13 @@ class UIPlanTree {
     public void updateNodesVisuals(String planElementName, Node<ARPlanElement> node) { //focusedNode
 
         if(node.getData().getName().equals(planElementName)){
-            node.getData().setBackgroundColor(Color.parseColor("#0000ff"));
+            node.getData().setBackgroundColor(flashColor);
 
         }
 
         for (Node<ARPlanElement> child : node.getChildren()){
             if(child.getData().getName().equals(planElementName)){
-                child.getData().setBackgroundColor(Color.parseColor("#0000ff"));
+                child.getData().setBackgroundColor(flashColor);
             }
 
         }
@@ -138,7 +140,7 @@ class UIPlanTree {
                 if(grandChild.getData().getName().equals(planElementName)){
 
                     //grandChild.getData().getView().setVisibility(View.VISIBLE);
-                    grandChild.getData().setBackgroundColor(Color.parseColor("#0000ff"));
+                    grandChild.getData().setBackgroundColor(flashColor);
 
                 }else{
 
@@ -225,7 +227,7 @@ class UIPlanTree {
     public void setDefaultBackgroundColorNodes(Node<ARPlanElement> node) {
 
         if(node.getData().getView().getVisibility() == View.VISIBLE){
-            node.getData().setBackgroundColor(Color.parseColor("#2f4f4f"));
+            node.getData().setBackgroundColor(backgroundColor);
         }
 
         node.getChildren().forEach(this::setDefaultBackgroundColorNodes);
@@ -282,14 +284,6 @@ class UIPlanTree {
         node.getChildren().forEach(it -> addNodesToUI(it));
     }
 
-    public void renderPreviousState() {
-
-        if(!historyNodes.empty()){
-            setFocusedNode(historyNodes.pop());
-        }
-
-        renderGrandChildren(getFocusedNode());
-    }
 
     public void initState() {
 
@@ -310,43 +304,8 @@ class UIPlanTree {
 
     }
 
-    public void saveState(Node<ARPlanElement> node) {
-
-        if(historyNodes.empty()){
-            System.out.println("saving state!");
-            historyNodes.push(node);
-        }
-
-        if(!historyNodes.peek().getData().getName().equals(getFocusedNode().getData().getName())) {
-            System.out.println("saving state!");
-            historyNodes.push(node);
-        }else{
-            System.out.println("not saving state!");
-        }
-    }
-
     public boolean isFocusedNode(Node<ARPlanElement> node) {
         return focusedNode.getData().getName().equals(node.getData().getName());
-    }
-
-    public void renderGrandChildren(Node<ARPlanElement> node) {
-
-        if(showingMore) {
-
-            for (Node<ARPlanElement> child : node.getChildren()) {
-                for (Node<ARPlanElement> grandChild : child.getChildren()) {
-                    grandChild.getData().getView().setVisibility(View.VISIBLE);
-                }
-            }
-
-        }else{
-
-            for (Node<ARPlanElement> child : node.getChildren()) {
-                for (Node<ARPlanElement> grandChild : child.getChildren()) {
-                    grandChild.getData().getView().setVisibility(View.INVISIBLE);
-                }
-            }
-        }
     }
 
     public boolean isNodeFocusedNodeParent(Node<ARPlanElement> node) {

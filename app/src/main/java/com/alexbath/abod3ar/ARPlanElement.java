@@ -16,7 +16,6 @@ class ARPlanElement {
     private TextView element;
     private GradientDrawable drawableBackground;
     private String uIName;
-    private Point2D_F64 newCoordinates;
 
     public ARPlanElement(Context applicationContext, int priority, String name, int borderColor){
 
@@ -31,10 +30,10 @@ class ARPlanElement {
         this.element = (TextView) View.inflate(applicationContext, R.layout.plan_element, null);
 
         this.element.setText(uIName);
+
         this.drawableBackground = (GradientDrawable) element.getBackground();
         this.drawableBackground.setStroke(2, borderColor);
 
-        this.newCoordinates = new Point2D_F64(0,0);
     }
 
     public View getView() {
@@ -47,14 +46,6 @@ class ARPlanElement {
 
     public String getName(){
         return name;
-    }
-
-    public void setNewCoordinates(Point2D_F64 coordinates) {
-        this.newCoordinates = coordinates;
-    }
-
-    public Point2D_F64 getNewCoordinates() {
-        return newCoordinates;
     }
 
 }

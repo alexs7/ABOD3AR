@@ -66,8 +66,6 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
     private TextView serverTextView = null;
     private FancyButton reset_button = null;
     private FancyButton showServerDataButton = null;
-    private FancyButton goBackButton = null;
-    private FancyButton expandButton = null;
     private ConstraintLayout rootLayout = null;
     private boolean showServerData = false;
     private static final int SERVER_RESPONSE = 1;
@@ -126,18 +124,9 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         showServerDataButton = findViewById(R.id.show_server_data);
         automaticModeButton = findViewById(R.id.automatic_mode);
         reset_button = findViewById(R.id.reset_button);
-        goBackButton = findViewById(R.id.go_back_button);
-        expandButton = findViewById(R.id.expand_button);
 
         startCamera(surfaceLayout,null);
         displayView.setOnTouchListener(this);
-
-        goBackButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                uiPlanTree.renderPreviousState();
-            }
-        });
 
         reset_button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -175,7 +164,6 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                         System.out.println("networkExecutor already exists!");
                     }
 
-                }else {
                 }
             }
         });
