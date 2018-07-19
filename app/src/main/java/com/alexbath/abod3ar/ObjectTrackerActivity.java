@@ -576,15 +576,17 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                         //view = canvas
                         Point2D_F64 viewCenter = getViewCenter(location, imageToView);
 
-                        int startingXPoint =   (- uiPlanTree.getFocusedNode().getData().getView().getWidth() / 2) + 80 ;
-                        int startingYPoint =   (- uiPlanTree.getFocusedNode().getData().getView().getHeight() / 2) + 80 ;
+                        int startingXPoint =  (- uiPlanTree.getFocusedNode().getData().getView().getWidth() / 2) + 80 ;
+                        int startingYPoint =  (- uiPlanTree.getFocusedNode().getData().getView().getHeight() / 2) + 80 ;
 
                         canvas.drawCircle((float) imageCenter.x, (float) imageCenter.y, 10, yellowPaint);
                         canvas.drawCircle((float) imageCenter.x, (float) imageCenter.y, 6, redPaint);
 
                         uiPlanTree.setUpTree(startingXPoint,startingYPoint,viewCenter);
 
-                        drawTreeUIElementsConnectors(uiPlanTree.getFocusedNode(),canvas,viewToImage,imageCenter);
+                        if(uiPlanTree.getFocusedNode().getParent() != null){
+                            drawTreeUIElementsConnectors(uiPlanTree.getFocusedNode().getParent(),canvas,viewToImage,imageCenter);
+                        }
 
 
                     }
@@ -597,40 +599,32 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
         private void drawTreeUIElementsConnectors(UIPlanTree.Node<ARPlanElement> node, Canvas canvas, Matrix viewToImage, Point2D_F64 imageCenter) {
 
-            if(uiPlanTree.isFocusedNode(node)) {
+            Point2D_F64 parentAnchor = new Point2D_F64();
+            applyToPoint(viewToImage, node.getData().getView().getX() + node.getData().getView().getWidth(),node.getData().getView().getY() + node.getData().getView().getHeight()/2, parentAnchor);
 
-                Point2D_F64 rootAnchor = new Point2D_F64();
-                applyToPoint(viewToImage, node.getData().getView().getX() + node.getData().getView().getWidth()/2,node.getData().getView().getY() + node.getData().getView().getHeight()/2, rootAnchor);
+            if( uiPlanTree.isNodeFocusedNodeParent(node)){
+                drawLine(canvas, parentAnchor, imageCenter, redPaint);
 
-                drawLine(canvas, imageCenter, rootAnchor, redPaint);
+                Point2D_F64 focusedNode = new Point2D_F64();
 
-                for (UIPlanTree.Node<ARPlanElement> child : node.getChildren()){
+                applyToPoint(viewToImage, uiPlanTree.getFocusedNode().getData().getView().getX() + uiPlanTree.getFocusedNode().getData().getView().getWidth()/2,uiPlanTree.getFocusedNode().getData().getView().getY() + uiPlanTree.getFocusedNode().getData().getView().getHeight()/2, focusedNode);
+
+                drawLine(canvas, imageCenter, focusedNode, redPaint);
+
+            }else {
+
+                for (UIPlanTree.Node<ARPlanElement> child : node.getChildren()) {
                     Point2D_F64 childAnchor = new Point2D_F64();
-                    applyToPoint(viewToImage, child.getData().getView().getX(),child.getData().getView().getY() + child.getData().getView().getHeight()/2, childAnchor);
+                    applyToPoint(viewToImage, child.getData().getView().getX(), child.getData().getView().getY() + child.getData().getView().getHeight() / 2, childAnchor);
 
-                    if(child.getData().getView().getVisibility() == View.VISIBLE){
-                        drawLine(canvas, rootAnchor, childAnchor, redPaint);
-                    }
-
-                    drawTreeUIElementsConnectors(child,canvas,viewToImage,imageCenter);
-                }
-
-            }else{
-                Point2D_F64 parentAnchor = new Point2D_F64();
-                applyToPoint(viewToImage, node.getData().getView().getX() + node.getData().getView().getWidth(),node.getData().getView().getY() + node.getData().getView().getHeight()/2, parentAnchor);
-
-                for (UIPlanTree.Node<ARPlanElement> child : node.getChildren()){
-                    Point2D_F64 childAnchor = new Point2D_F64();
-                    applyToPoint(viewToImage, child.getData().getView().getX(),child.getData().getView().getY() + child.getData().getView().getHeight()/2, childAnchor);
-
-                    if(child.getData().getView().getVisibility() == View.VISIBLE){
+                    if (child.getData().getView().getVisibility() == View.VISIBLE) {
                         drawLine(canvas, parentAnchor, childAnchor, redPaint);
                     }
                 }
+            }
 
-                for (int i = 0; i < node.getChildren().size(); i++){
-                    drawTreeUIElementsConnectors(node.getChildren().get(i),canvas,viewToImage,imageCenter);
-                }
+            for (int i = 0; i < node.getChildren().size(); i++){
+                drawTreeUIElementsConnectors(node.getChildren().get(i),canvas,viewToImage,imageCenter);
             }
         }
 

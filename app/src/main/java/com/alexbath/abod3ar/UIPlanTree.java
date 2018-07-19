@@ -504,6 +504,12 @@ class UIPlanTree {
         return showingMore;
     }
 
+    public boolean isNodeFocusedNodeParent(Node<ARPlanElement> node) {
+
+        return getFocusedNode().getParent().getData().getName().equals(node.getData().getName());
+
+    }
+
     public class Node<T>{
 
         private T data = null;
