@@ -110,7 +110,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
 
         planName = "plans/Plan6.inst";
-        serverIPAddress = "192.168.178.21";
+        serverIPAddress = "192.168.0.100";
         serverPort = 3001;
 
         createGeneralHandler();
@@ -131,37 +131,6 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
         startCamera(surfaceLayout,null);
         displayView.setOnTouchListener(this);
-
-        automaticModeButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                if(uiPlanTree != null){
-                    if(uiPlanTree.getAutomaticMode()){
-                        automaticModeButton.setText("Enable Auto Mode");
-                        uiPlanTree.setAutomaticMode(false);
-                    }else {
-                        automaticModeButton.setText("Disable Auto Mode");
-                        uiPlanTree.setAutomaticMode(true);
-                    }
-                }
-            }
-        });
-
-        expandButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                uiPlanTree.saveState(uiPlanTree.getFocusedNode());
-
-                if(!uiPlanTree.getShowingMore()){
-                    uiPlanTree.setShowingMore(true);
-                }else{
-                    uiPlanTree.setShowingMore(false);
-                }
-
-                uiPlanTree.renderGrandChildren(uiPlanTree.getFocusedNode());
-
-            }
-        });
 
         goBackButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -666,17 +635,6 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
             for (int i = 0; i < node.getChildren().size(); i++){
                 drawTreeUIElementsConnectors(node.getChildren().get(i),canvas,viewToImage,imageCenter);
-            }
-        }
-
-        private void updateNodeRecursively(UIPlanTree.Node<ARPlanElement> node , double dx, double dy) {
-
-            node.getData().getView().setX((float) ((node.getParent().getData().getView().getX() - dx)));
-            node.getData().getView().setY((float) ((node.getParent().getData().getView().getY() - dy)));
-
-            for (int i = 0; i < node.getChildren().size(); i++){
-                node.getChildren().get(i).getData().setDragged(true);
-                updateNodeRecursively(node.getChildren().get(i),dx,dy);
             }
         }
 

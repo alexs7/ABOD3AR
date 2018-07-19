@@ -21,10 +21,8 @@ import georegression.struct.point.Point2D_F64;
 
 class UIPlanTree {
 
-    private final List<DriveCollection> driveCollections;
     private final ConstraintLayout overlayLayout;
     public Node<ARPlanElement> root = null;
-    public boolean automaticMode = true;
     private Node<ARPlanElement> focusedNode = null;
     private Stack<Node<ARPlanElement>> historyNodes = new Stack<>();
     private int nodeWidthSeperation = 24;
@@ -33,7 +31,6 @@ class UIPlanTree {
 
     public UIPlanTree(List<DriveCollection> driveCollections, Context context, ConstraintLayout overlayLayout) {
 
-        this.driveCollections = driveCollections;
         this.root = new Node<>(new ARPlanElement(context, 0,"Drives", Color.YELLOW));
         this.overlayLayout = overlayLayout;
 
@@ -109,16 +106,6 @@ class UIPlanTree {
 
     }
 
-    private void stabilizeNode(UIPlanTree.Node<ARPlanElement> node) {
-        node.getData().getView().setX((float) (node.getParent().getData().getView().getX() - node.getData().getNewCoordinates().x));
-        node.getData().getView().setY((float) (node.getParent().getData().getView().getY() - node.getData().getNewCoordinates().y));
-
-        for (int i = 0; i < node.getChildren().size(); i++){
-            stabilizeNode(node.getChildren().get(i));
-        }
-
-    }
-
 
     public void removeNodesFromUI(ConstraintLayout rootLayout, Node<ARPlanElement> node) {
         rootLayout.removeView(node.getData().getView());
@@ -138,7 +125,6 @@ class UIPlanTree {
         }
 
         for (Node<ARPlanElement> child : node.getChildren()){
-
             if(child.getData().getName().equals(planElementName)){
                 child.getData().setBackgroundColor(Color.parseColor("#0000ff"));
             }
@@ -163,38 +149,11 @@ class UIPlanTree {
             }
 
         }
-
-//            node.getData().setBackgroundColor(Color.parseColor("#0000ff"));
-
-//            if(automaticMode) {
-
-
-
-//                if (isDrive(node.getParent())) {
-//                    hideOtherDrivesChildren(node.getParent());
-//                }
-//
-//                if (isDrive(node) && node.getChildren().isEmpty()) {
-//                    hideOtherDrivesChildren(node);
-//                }
-//
-//                if (node.getData().getView().getVisibility() == View.INVISIBLE && isDrive(node.getParent())) {
-//                    node.getData().getView().setVisibility(View.VISIBLE);
-//                    node.getChildren().forEach(it -> it.getData().getView().setVisibility(View.VISIBLE));
-//                }
-//            }
-//
-//        }else{
-//            //node.getData().setBackgroundColor(Color.parseColor("#2f4f4f"));
-//
-//        }
-
-//        node.getChildren().forEach(it -> updateNodesVisuals(planElementName, it));
     }
 
     public void createNodes(Node<ARPlanElement> node, Object obj, Context context) {
 
-        node.getData().getView().setOnTouchListener(new UIPlanTreeNodeTouchListener(this,node));
+        node.getData().getView().setOnClickListener(new UIPlanTreeNodeTouchListener(this,node));
 
         if(obj instanceof ActionEvent){
 
@@ -263,87 +222,6 @@ class UIPlanTree {
 
     }
 
-    public void hideAllOtherDrives(Node<ARPlanElement> node) {
-        if (isDrive(node)) {
-            for (Node<ARPlanElement> drive : root.getChildren()) {
-                if (!drive.getData().getName().equals(node.getData().getName())) {
-                    hideNodes(drive);
-                }
-            }
-        }else{
-            hideAllOtherDrives(node.getParent());
-        }
-    }
-
-    public void hideOtherDrivesChildren(Node<ARPlanElement> node) {
-        if (isDrive(node)) {
-            for (Node<ARPlanElement> drive : root.getChildren()) {
-                if (!drive.getData().getName().equals(node.getData().getName())) {
-                    for (Node<ARPlanElement> driveChild : drive.getChildren()) {
-                        hideNodes(driveChild);
-                    }
-                }
-            }
-        }
-    }
-
-    public void updateNodeXY(Node<ARPlanElement> node, MotionEvent event, float dX, float dY, float offsetX, float offsetY) {
-
-        node.getData().setNewCoordinates(new Point2D_F64(node.getParent().getData().getView().getX() - node.getData().getView().getX(), node.getParent().getData().getView().getY() - node.getData().getView().getY()));
-
-        node.getData().getView().setX(event.getRawX() + offsetX + dX);
-        node.getData().getView().setY(event.getRawY() + offsetY + dY);
-
-        offsetX += node.getData().getView().getWidth() + 12;
-
-        for (int i = 0; i < node.getChildren().size(); i++) {
-            updateNodeXY(node.getChildren().get(i),event,dX,dY,offsetX,offsetY);
-            offsetY += node.getData().getView().getHeight() + 12;
-        }
-
-    }
-
-    public void setNodeToDragging(Node<ARPlanElement> node, boolean dragging) {
-        node.getData().setDragging(dragging);
-        node.getChildren().forEach(it -> setNodeToDragging(it,dragging));
-    }
-
-    public void setDragged(Node<ARPlanElement> node) {
-        node.getData().setDragged(true);
-        node.getChildren().forEach(it -> setDragged(it));
-    }
-
-    public boolean isRoot(Node<ARPlanElement> node) {
-
-        if(node.getParent() == null){
-            return true;
-        }
-
-        return false;
-
-    }
-
-    public boolean isDrive(Node<ARPlanElement> node) {
-
-        if(node.getParent() == null){
-            return false;
-        }
-
-        if(node.getParent().getParent() == null){
-            return true;
-        }
-
-        return false;
-    }
-
-    public boolean getAutomaticMode() {
-        return automaticMode;
-    }
-
-    public void setAutomaticMode(boolean automaticMode) {
-        this.automaticMode = automaticMode;
-    }
-
     public void setDefaultBackgroundColorNodes(Node<ARPlanElement> node) {
 
         if(node.getData().getView().getVisibility() == View.VISIBLE){
@@ -363,13 +241,8 @@ class UIPlanTree {
             focusedNode.getParent().getData().getView().setVisibility(View.VISIBLE);
         }
 
-        //hideNodeParents(focusedNode);
-
         hideNodeSiblings(focusedNode);
-
         showNodeChildren(focusedNode);
-
-        //System.out.println("Setting focused node to: "+focusedNode.getData().getUIName());
 
         this.focusedNode = focusedNode;
     }
@@ -390,7 +263,6 @@ class UIPlanTree {
 
     }
 
-
     private void hideNodeSiblings(Node<ARPlanElement> node) {
 
         if(node.getParent() != null) {
@@ -402,30 +274,12 @@ class UIPlanTree {
         }
     }
 
-    private void hideNodeParents(Node<ARPlanElement> node) {
-
-        if(node.getParent() != null) {
-            node.getParent().getData().getView().setVisibility(View.INVISIBLE);
-            hideNodeParents(node.getParent());
-        }
-    }
-
     public void addNodesToUI(Node<ARPlanElement> node) {
-
-//        if(node.getParent() == null || node.getParent().getParent() == null ){
-//            node.getData().getView().setVisibility(View.VISIBLE);
-//        }else{
-//            //node.getData().getView().setVisibility(View.INVISIBLE);
-//        }
 
         node.getData().getView().setVisibility(View.INVISIBLE);
         overlayLayout.addView(node.getData().getView());
 
         node.getChildren().forEach(it -> addNodesToUI(it));
-    }
-
-    public void addNodeToUI(Node<ARPlanElement> node){
-        overlayLayout.addView(node.getData().getView());
     }
 
     public void renderPreviousState() {
@@ -435,7 +289,6 @@ class UIPlanTree {
         }
 
         renderGrandChildren(getFocusedNode());
-
     }
 
     public void initState() {
@@ -494,14 +347,6 @@ class UIPlanTree {
                 }
             }
         }
-    }
-
-    public void setShowingMore(boolean showingMore) {
-        this.showingMore = showingMore;
-    }
-
-    public boolean getShowingMore() {
-        return showingMore;
     }
 
     public boolean isNodeFocusedNodeParent(Node<ARPlanElement> node) {
