@@ -179,4 +179,27 @@
         fancy:fb_text="Go Back"
         fancy:fb_textColor="#FFFFFF" />
 
+    <mehdi.sakout.fancybuttons.FancyButton
+        android:id="@+id/expand_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="60dp"
+        android:layout_marginStart="8dp"
+        android:paddingBottom="6dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="6dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toRightOf="@+id/camera_frame_layout"
+        app:layout_constraintStart_toStartOf="@+id/camera_frame_layout"
+        fancy:fb_borderColor="#FFFFFF"
+        fancy:fb_borderWidth="1dp"
+        fancy:fb_defaultColor="#0068b8"
+        fancy:fb_focusColor="#2387d8"
+        fancy:fb_fontIconResource="&#xf0fe;"
+        fancy:fb_iconPosition="left"
+        fancy:fb_radius="10dp"
+        fancy:fb_text="Show More"
+        fancy:fb_textColor="#FFFFFF" />
+
 </android.support.constraint.ConstraintLayout>

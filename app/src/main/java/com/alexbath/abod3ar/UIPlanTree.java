@@ -27,6 +27,9 @@ class UIPlanTree {
     public boolean automaticMode = true;
     private Node<ARPlanElement> focusedNode = null;
     private Stack<Node<ARPlanElement>> historyNodes = new Stack<>();
+    private int nodeWidthSeperation = 24;
+    private int nodeHeightSeperation = 16;
+    private boolean showingMore = false;
 
     public UIPlanTree(List<DriveCollection> driveCollections, Context context, ConstraintLayout overlayLayout) {
 
@@ -51,7 +54,7 @@ class UIPlanTree {
             node.getData().getView().setX((float) ( viewCenter.x + widthAppender  ));
             node.getData().getView().setY((float) ( viewCenter.y + heightAppender ));
 
-            widthAppender = widthAppender + node.getData().getView().getWidth() + 12;
+            widthAppender = widthAppender + node.getData().getView().getWidth() + nodeWidthSeperation;
 
             int childrenTotalHeight = 0;
 
@@ -71,7 +74,7 @@ class UIPlanTree {
 
             for (int i = 0; i < node.getChildren().size(); i++){
                 setUpTreeRender(node.getChildren().get(i), widthAppender, heightAppender - heightOffset,viewCenter);
-                heightAppender = heightAppender + node.getData().getView().getHeight() + 12;
+                heightAppender = heightAppender + node.getData().getView().getHeight() + nodeHeightSeperation;
             }
         }else{
 
@@ -85,7 +88,7 @@ class UIPlanTree {
                 node.getData().getView().setX((float) (viewCenter.x + widthAppender));
                 node.getData().getView().setY((float) (viewCenter.y + heightAppender));
 
-                widthAppender = widthAppender + node.getData().getView().getWidth() + 12;
+                widthAppender = widthAppender + node.getData().getView().getWidth() + nodeWidthSeperation;
 
                 int childrenTotalHeight = 0;
 
@@ -105,7 +108,7 @@ class UIPlanTree {
 
                 for (int i = 0; i < node.getChildren().size(); i++) {
                     setUpTreeRender(node.getChildren().get(i), widthAppender, heightAppender - heightOffset, viewCenter);
-                    heightAppender = heightAppender + node.getData().getView().getHeight() + 12;
+                    heightAppender = heightAppender + node.getData().getView().getHeight() + nodeHeightSeperation;
                 }
             }
         }
@@ -154,12 +157,12 @@ class UIPlanTree {
 
                 if(grandChild.getData().getName().equals(planElementName)){
 
-                    grandChild.getData().getView().setVisibility(View.VISIBLE);
+                    //grandChild.getData().getView().setVisibility(View.VISIBLE);
                     grandChild.getData().setBackgroundColor(Color.parseColor("#0000ff"));
 
                 }else{
 
-                    grandChild.getData().getView().setVisibility(View.INVISIBLE);
+                    //grandChild.getData().getView().setVisibility(View.INVISIBLE);
 
                 }
 
@@ -368,7 +371,7 @@ class UIPlanTree {
         hideNodeSiblings(focusedNode);
         showNodeChildren(focusedNode);
 
-        System.out.println("Setting focused node to: "+focusedNode.getData().getUIName());
+        //System.out.println("Setting focused node to: "+focusedNode.getData().getUIName());
 
         this.focusedNode = focusedNode;
     }
@@ -433,6 +436,8 @@ class UIPlanTree {
             setFocusedNode(historyNodes.pop());
         }
 
+        renderGrandChildren(getFocusedNode());
+
     }
 
     public void initState() {
@@ -455,7 +460,50 @@ class UIPlanTree {
     }
 
     public void saveState(Node<ARPlanElement> node) {
-        historyNodes.push(node);
+
+        if(historyNodes.empty()){
+            System.out.println("saving state!");
+            historyNodes.push(node);
+        }
+
+        if(!historyNodes.peek().getData().getName().equals(getFocusedNode().getData().getName())) {
+            System.out.println("saving state!");
+            historyNodes.push(node);
+        }else{
+            System.out.println("not saving state!");
+        }
+    }
+
+    public boolean isFocusedNode(Node<ARPlanElement> node) {
+        return focusedNode.getData().getName().equals(node.getData().getName());
+    }
+
+    public void renderGrandChildren(Node<ARPlanElement> node) {
+
+        if(showingMore) {
+
+            for (Node<ARPlanElement> child : node.getChildren()) {
+                for (Node<ARPlanElement> grandChild : child.getChildren()) {
+                    grandChild.getData().getView().setVisibility(View.VISIBLE);
+                }
+            }
+
+        }else{
+
+            for (Node<ARPlanElement> child : node.getChildren()) {
+                for (Node<ARPlanElement> grandChild : child.getChildren()) {
+                    grandChild.getData().getView().setVisibility(View.INVISIBLE);
+                }
+            }
+        }
+    }
+
+    public void setShowingMore(boolean showingMore) {
+        this.showingMore = showingMore;
+    }
+
+    public boolean getShowingMore() {
+        return showingMore;
     }
 
     public class Node<T>{

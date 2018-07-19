@@ -3,7 +3,6 @@ package com.alexbath.abod3ar;
 import android.Manifest;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -68,6 +67,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
     private FancyButton reset_button = null;
     private FancyButton showServerDataButton = null;
     private FancyButton goBackButton = null;
+    private FancyButton expandButton = null;
     private ConstraintLayout rootLayout = null;
     private boolean showServerData = false;
     private static final int SERVER_RESPONSE = 1;
@@ -127,6 +127,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         automaticModeButton = findViewById(R.id.automatic_mode);
         reset_button = findViewById(R.id.reset_button);
         goBackButton = findViewById(R.id.go_back_button);
+        expandButton = findViewById(R.id.expand_button);
 
         startCamera(surfaceLayout,null);
         displayView.setOnTouchListener(this);
@@ -142,6 +143,23 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                         uiPlanTree.setAutomaticMode(true);
                     }
                 }
+            }
+        });
+
+        expandButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                uiPlanTree.saveState(uiPlanTree.getFocusedNode());
+
+                if(!uiPlanTree.getShowingMore()){
+                    uiPlanTree.setShowingMore(true);
+                }else{
+                    uiPlanTree.setShowingMore(false);
+                }
+
+                uiPlanTree.renderGrandChildren(uiPlanTree.getFocusedNode());
+
             }
         });
 
@@ -565,7 +583,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                         canvas.drawCircle((float) imageCenter.x, (float) imageCenter.y, 6, redPaint);
 
                         uiPlanTree.setUpTree(startingXPoint,startingYPoint,viewCenter);
-                        //drawTreeUIElementsConnectors(root,canvas,viewToImage,imageCenter);
+                        drawTreeUIElementsConnectors(uiPlanTree.getFocusedNode(),canvas,viewToImage,imageCenter);
 
 
                     }
@@ -578,7 +596,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
         private void drawTreeUIElementsConnectors(UIPlanTree.Node<ARPlanElement> node, Canvas canvas, Matrix viewToImage, Point2D_F64 imageCenter) {
 
-            if(uiPlanTree.isRoot(node)) {
+            if(uiPlanTree.isFocusedNode(node)) {
 
                 Point2D_F64 rootAnchor = new Point2D_F64();
                 applyToPoint(viewToImage, node.getData().getView().getX() + node.getData().getView().getWidth()/2,node.getData().getView().getY() + node.getData().getView().getHeight()/2, rootAnchor);
