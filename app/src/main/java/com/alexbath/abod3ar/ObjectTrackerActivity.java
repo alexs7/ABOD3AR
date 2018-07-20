@@ -62,7 +62,6 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
     private ConstraintLayout overlayLayout = null;
     private FancyButton connectToServerbutton = null;
     private FancyButton loadPlanButton = null;
-    private FancyButton automaticModeButton = null;
     private TextView serverTextView = null;
     private FancyButton reset_button = null;
     private FancyButton showServerDataButton = null;
@@ -122,7 +121,6 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
         connectToServerbutton = findViewById(R.id.connect_server_button);
         loadPlanButton = findViewById(R.id.load_plan_button);
         showServerDataButton = findViewById(R.id.show_server_data);
-        automaticModeButton = findViewById(R.id.automatic_mode);
         reset_button = findViewById(R.id.reset_button);
 
         startCamera(surfaceLayout,null);
@@ -189,11 +187,11 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
                             @Override
                             public void run() {
-                                uiPlanTree.setDefaultBackgroundColorNodes(uiPlanTree.getRoot());
+                                uiPlanTree.setDefaultBackgroundColorNodes();
                             }
                         };
 
-                        backgroundPingerScheduler.scheduleAtFixedRate(backgroundPinger, 30, 300, TimeUnit.MILLISECONDS);
+                        backgroundPingerScheduler.scheduleAtFixedRate(backgroundPinger, 30, 400, TimeUnit.MILLISECONDS);
                     }
                 });
 
@@ -257,7 +255,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
                 planElement = getPlanElement(typeOfPlanElement, planElement, planElementName);
                 if (planElement != null) {
                     if(uiPlanTree != null) {
-                        uiPlanTree.updateNodesVisuals(planElementName, uiPlanTree.getFocusedNode());
+                        uiPlanTree.updateNodesVisuals(planElementName);
                     }
                 }
             }

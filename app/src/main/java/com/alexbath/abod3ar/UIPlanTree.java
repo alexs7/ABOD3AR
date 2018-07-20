@@ -22,14 +22,14 @@ import georegression.struct.point.Point2D_F64;
 class UIPlanTree {
 
     private final ConstraintLayout overlayLayout;
-    public Node<ARPlanElement> root = null;
+    public Node<ARPlanElement> root;
     private Node<ARPlanElement> focusedNode = null;
     private Stack<Node<ARPlanElement>> historyNodes = new Stack<>();
     private int nodeWidthSeperation = 24;
     private int nodeHeightSeperation = 16;
-    private boolean showingMore = false;
-    private int flashColor = Color.parseColor("#0000ff");
+    private int flashColor = Color.CYAN;
     private int backgroundColor = Color.parseColor("#2f4f4f");
+    private ArrayList<Node<ARPlanElement>> allVisibleNodes = new ArrayList<Node<ARPlanElement>>();
 
     public UIPlanTree(List<DriveCollection> driveCollections, Context context, ConstraintLayout overlayLayout) {
 
@@ -119,40 +119,32 @@ class UIPlanTree {
         node.getChildren().forEach(it -> hideNodes(it));
     }
 
-    public void updateNodesVisuals(String planElementName, Node<ARPlanElement> node) { //focusedNode
+    public void updateNodesVisuals(String planElementName) { //focusedNode
 
+        for(Node<ARPlanElement> visibleNode : allVisibleNodes ){
 
-        
-
-        if(node.getData().getName().equals(planElementName)){
-            node.getData().setBackgroundColor(flashColor);
-
-        }
-
-        for (Node<ARPlanElement> child : node.getChildren()){
-            if(child.getData().getName().equals(planElementName)){
-                child.getData().setBackgroundColor(flashColor);
+            if(visibleNode.getData().getName().equals(planElementName)){
+                visibleNode.getData().setBackgroundColor(flashColor);
             }
 
         }
 
-        for (Node<ARPlanElement> child : node.getChildren()){
+    }
 
-            for (Node<ARPlanElement> grandChild : child.getChildren()){
+    public void setAllVisibleNodes() {
 
-                if(grandChild.getData().getName().equals(planElementName)){
+        System.out.println("setAllVisibleNodes called!");
 
-                    //grandChild.getData().getView().setVisibility(View.VISIBLE);
-                    grandChild.getData().setBackgroundColor(flashColor);
+        allVisibleNodes.clear();
 
-                }else{
+        if(getFocusedNode().getParent() != null) {
+            allVisibleNodes.add(getFocusedNode().getParent());
+        }
 
-                    //grandChild.getData().getView().setVisibility(View.INVISIBLE);
+        allVisibleNodes.add(getFocusedNode());
 
-                }
-
-            }
-
+        for(Node<ARPlanElement> child : getFocusedNode().getChildren()){
+            allVisibleNodes.add(child);
         }
     }
 
@@ -227,13 +219,11 @@ class UIPlanTree {
 
     }
 
-    public void setDefaultBackgroundColorNodes(Node<ARPlanElement> node) {
+    public void setDefaultBackgroundColorNodes() {
 
-        if(node.getData().getView().getVisibility() == View.VISIBLE){
-            node.getData().setBackgroundColor(backgroundColor);
+        for(Node<ARPlanElement> visibleNode : allVisibleNodes ){
+            visibleNode.getData().setBackgroundColor(backgroundColor);
         }
-
-        node.getChildren().forEach(this::setDefaultBackgroundColorNodes);
     }
 
     public Node<ARPlanElement> getFocusedNode() {
@@ -304,6 +294,8 @@ class UIPlanTree {
             }
 
         }
+
+        setAllVisibleNodes();
 
     }
 

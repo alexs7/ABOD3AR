@@ -18,5 +18,7 @@ class UIPlanTreeNodeTouchListener implements View.OnClickListener {
 
         uiPlanTree.hideNodes(uiPlanTree.getRoot());
         uiPlanTree.setFocusedNode(node);
+
+        uiPlanTree.setAllVisibleNodes();
     }
 }
