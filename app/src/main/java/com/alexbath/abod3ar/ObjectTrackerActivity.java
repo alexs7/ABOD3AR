@@ -48,6 +48,7 @@ import georegression.struct.point.Point2D_I32;
 import georegression.struct.shapes.Quadrilateral_F64;
 import mehdi.sakout.fancybuttons.FancyButton;
 
+import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.CIRCULANT;
 import static com.alexbath.abod3ar.ObjectTrackerActivity.TrackerType.TLD;
 
 public class ObjectTrackerActivity extends Camera2Activity implements View.OnTouchListener {
@@ -313,7 +314,7 @@ public class ObjectTrackerActivity extends Camera2Activity implements View.OnTou
 
     @Override
     public void createNewProcessor() {
-        startObjectTracking(setTrackerType(TLD));
+        startObjectTracking(setTrackerType(CIRCULANT));
     }
 
     private void startObjectTracking(int pos) {
